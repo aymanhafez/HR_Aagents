@@ -1,6 +1,7 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { createClient } from "@supabase/supabase-js";
-import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import { convertToModelMessages, stepCountIs, streamText, tool, type UIMessage } from "ai";
+import { z } from "zod";
 
 import { modules } from "@/data/modules";
 import { approvals, employees, recommendations, roles } from "@/data/workspace";
@@ -42,7 +43,7 @@ function workspaceSnapshot() {
   return `MODULE SIGNALS\n${moduleLines}\n\nAI RECOMMENDATIONS\n${recLines}\n\nEMPLOYEES\n${empLines}\n\nPENDING APPROVALS\n${apprLines}`;
 }
 
-async function uploadedSnapshot() {
+function publicClient() {
   const url = process.env["SUPABASE_URL"]!;
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
   const sb = createClient(url, key, {
@@ -56,6 +57,11 @@ async function uploadedSnapshot() {
       },
     },
   });
+  return sb;
+}
+
+async function uploadedSnapshot() {
+  const sb = publicClient();
   const { data, error } = await sb.from("uploaded_employees").select("*").limit(3000);
   if (error) throw error;
   const rows = data ?? [];
@@ -144,6 +150,43 @@ export async function handleChat(request: Request) {
     }
   }
 
+  system += `
+
+TASKS
+You can create follow-up tasks with the create_task tool. Use it when the user asks for a task, action item or follow-up, or asks you to assign work. Base the task on what was discussed in this conversation: a clear action title, a description with the relevant figures and context, a realistic due date (today is ${new Date().toISOString().slice(0, 10)}), and a priority. Assign it only to an employee who exists in the data above, using their exact name; if the right person is unclear, ask. After creating it, confirm in one line who it was assigned to and when it is due.`;
+
+  const lastUser = [...messages].reverse().find((m) => m.role === "user");
+  const sourceQuestion = lastUser?.parts.map((p) => (p.type === "text" ? p.text : "")).join(" ").slice(0, 500) ?? "";
+
+  const tools = {
+    create_task: tool({
+      description: "Create a follow-up task assigned to one employee, based on the current conversation.",
+      inputSchema: z.object({
+        title: z.string().describe("Short action title"),
+        description: z.string().describe("What to do and why, with figures from the conversation"),
+        assignee_name: z.string().describe("Exact employee name from the data"),
+        assignee_department: z.string().describe("Employee department, or empty string"),
+        priority: z.enum(["Low", "Medium", "High", "Critical"]),
+        due_date: z.string().describe("Due date YYYY-MM-DD"),
+      }),
+      execute: async (input) => {
+        const { data, error } = await publicClient()
+          .from("chat_tasks")
+          .insert({
+            ...input,
+            due_date: /^\d{4}-\d{2}-\d{2}$/.test(input.due_date) ? input.due_date : null,
+            source_question: sourceQuestion,
+            created_by_role: body.roleId ?? "",
+            data_source: body.dataSource === "uploaded" ? "uploaded" : "seeded",
+          })
+          .select("id")
+          .single();
+        if (error) return { ok: false as const, error: error.message };
+        return { ok: true as const, id: data.id, ...input };
+      },
+    }),
+  };
+
   const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
   const provider = createOpenAI({
     baseURL: GATEWAY_URL,
@@ -155,6 +198,8 @@ export async function handleChat(request: Request) {
   const result = streamText({
     model: provider.responses(MODEL),
     system,
+    tools,
+    stopWhen: stepCountIs(4),
     messages: await convertToModelMessages(messages),
     abortSignal: request.signal,
     providerOptions: {

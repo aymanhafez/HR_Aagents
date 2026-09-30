@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_tasks: {
+        Row: {
+          assignee_department: string
+          assignee_name: string
+          created_at: string
+          created_by_role: string
+          data_source: string
+          description: string
+          due_date: string | null
+          id: string
+          priority: string
+          source_question: string
+          status: string
+          title: string
+        }
+        Insert: {
+          assignee_department?: string
+          assignee_name: string
+          created_at?: string
+          created_by_role?: string
+          data_source?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          priority?: string
+          source_question?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          assignee_department?: string
+          assignee_name?: string
+          created_at?: string
+          created_by_role?: string
+          data_source?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          priority?: string
+          source_question?: string
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
       uploaded_employees: {
         Row: {
           created_at: string
