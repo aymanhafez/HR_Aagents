@@ -18,6 +18,9 @@ import {
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
+import { Tool, ToolContent, ToolHeader } from "@/components/ai-elements/tool";
+import { Link } from "@tanstack/react-router";
+import { ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Role } from "@/data/workspace";
 
@@ -96,11 +99,42 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
             messages.map((message) => (
               <Message key={message.id} from={message.role}>
                 <MessageContent>
-                  {message.parts.map((part, i) =>
-                    part.type === "text" ? (
-                      <MessageResponse key={i}>{part.text}</MessageResponse>
-                    ) : null,
-                  )}
+                  {message.parts.map((part, i) => {
+                    if (part.type === "text") return <MessageResponse key={i}>{part.text}</MessageResponse>;
+                    if (part.type === "tool-create_task") {
+                      const p = part as unknown as {
+                        state: "input-streaming" | "input-available" | "output-available" | "output-error";
+                        input?: { title?: string; assignee_name?: string };
+                        output?: { ok: boolean; error?: string; title?: string; assignee_name?: string; assignee_department?: string; priority?: string; due_date?: string; description?: string };
+                        errorText?: string;
+                      };
+                      const o = p.output;
+                      return (
+                        <Tool key={i} defaultOpen={false}>
+                          <ToolHeader type="tool-create_task" state={p.state} title={`Task: ${o?.title ?? p.input?.title ?? "creating…"}`} />
+                          <ToolContent>
+                            <div className="space-y-1.5 p-3 text-xs">
+                              {o?.ok ? (
+                                <>
+                                  <p><span className="text-muted-foreground">Assigned to</span> <span className="font-medium">{o.assignee_name}</span>{o.assignee_department ? ` · ${o.assignee_department}` : ""}</p>
+                                  <p><span className="text-muted-foreground">Priority</span> {o.priority} · <span className="text-muted-foreground">Due</span> {o.due_date}</p>
+                                  <p className="text-muted-foreground">{o.description}</p>
+                                  <Link to="/tasks" className="inline-block font-medium text-primary underline">Open Tasks</Link>
+                                </>
+                              ) : o && !o.ok ? (
+                                <p className="text-destructive">Could not save task: {o.error}</p>
+                              ) : p.errorText ? (
+                                <p className="text-destructive">{p.errorText}</p>
+                              ) : (
+                                <p className="text-muted-foreground">Preparing task for {p.input?.assignee_name ?? "…"}</p>
+                              )}
+                            </div>
+                          </ToolContent>
+                        </Tool>
+                      );
+                    }
+                    return null;
+                  })}
                 </MessageContent>
               </Message>
             ))
@@ -111,6 +145,18 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
       </Conversation>
 
       <div className="border-t border-border p-3">
+        {messages.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="mb-2 w-full gap-2 text-xs"
+            disabled={busy}
+            onClick={() => send("Create a follow-up task from this conversation and assign it to the most suitable employee.")}
+          >
+            <ListChecks className="h-3.5 w-3.5" />
+            Create task from this chat
+          </Button>
+        )}
         <PromptInput
           onSubmit={(_message, event) => {
             event.preventDefault();
