@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useDataSource } from "@/lib/data-source";
-import { fetchUploadedEmployees, mapRow } from "@/lib/uploaded-data";
+import { mapRow } from "@/lib/uploaded-data";
 
 export const Route = createFileRoute("/data-sources")({
   head: () => ({
@@ -125,5 +125,3 @@ function DataSourcesPage() {
     </div>
   );
 }
-
-export { fetchUploadedEmployees };

@@ -28,14 +28,16 @@ const SUGGESTIONS = [
   "Who is ready for the Support Team Lead role?",
 ];
 
-export function AssistantPanel({ role, context }: { role: Role; context: string }) {
+export function AssistantPanel({ role, context, dataSource }: { role: Role; context: string; dataSource: string }) {
+  const bodyRef = useRef({ roleId: role.id, context, dataSource });
+  bodyRef.current = { roleId: role.id, context, dataSource };
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { messages, sendMessage, status, stop } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
-      body: { roleId: role.id, context },
+      body: () => bodyRef.current,
     }),
     onError: (error) => toast.error(error.message || "Brite AI could not answer. Try again."),
   });
@@ -60,7 +62,7 @@ export function AssistantPanel({ role, context }: { role: Role; context: string 
         <div className="leading-tight">
           <p className="font-display text-sm font-semibold">Brite AI</p>
           <p className="text-xs text-muted-foreground">
-            {role.title} view · {role.focus}
+            {role.title} view · {dataSource === "uploaded" ? "Your uploaded data" : "Sample company"}
           </p>
         </div>
       </div>
