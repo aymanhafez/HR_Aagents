@@ -63,7 +63,7 @@ function DataSourcesPage() {
   const clearAll = async () => {
     if (!confirm("Delete all uploaded employees?")) return;
     const { error } = await supabase.from("uploaded_employees").delete().not("id", "is", null);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Uploaded data cleared");
     setSource("seeded");
     await refresh();
