@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { employees } from "@/data/workspace";
 import { useDataSource } from "@/lib/data-source";
-import { fetchUploadedEmployees } from "@/lib/uploaded-data";
+import { fetchUploadedEmployees, type UploadedEmployee } from "@/lib/uploaded-data";
 
 export const Route = createFileRoute("/employees/")({
   head: () => ({
@@ -108,7 +108,7 @@ function EmployeesPage() {
   );
 }
 
-function UploadedEmployees({ rows, loading }: { rows?: Awaited<ReturnType<typeof fetchUploadedEmployees>>; loading: boolean }) {
+function UploadedEmployees({ rows, loading }: { rows: UploadedEmployee[] | undefined; loading: boolean }) {
   const list = rows ?? [];
   const util = list.filter((r) => r.utilization != null);
   const avg = util.length ? Math.round(util.reduce((a, r) => a + (r.utilization ?? 0), 0) / util.length) : null;
