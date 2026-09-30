@@ -10,7 +10,37 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdministrationRouteImport } from './routes/administration'
+import { Route as AiAgentsRouteImport } from './routes/ai-agents'
+import { Route as AiAuditRouteImport } from './routes/ai-audit'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as ApprovalCenterRouteImport } from './routes/approval-center'
+import { Route as AttendanceRouteImport } from './routes/attendance'
+import { Route as BenefitsRouteImport } from './routes/benefits'
+import { Route as CareerPathsRouteImport } from './routes/career-paths'
+import { Route as CompensationRouteImport } from './routes/compensation'
+import { Route as ComplianceRouteImport } from './routes/compliance'
+import { Route as EmployeeRelationsRouteImport } from './routes/employee-relations'
+import { Route as ExecutiveRouteImport } from './routes/executive'
+import { Route as GoalsRouteImport } from './routes/goals'
+import { Route as IntegrationsRouteImport } from './routes/integrations'
+import { Route as InternalMobilityRouteImport } from './routes/internal-mobility'
+import { Route as LearningRouteImport } from './routes/learning'
+import { Route as LeaveRouteImport } from './routes/leave'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as OrganizationRouteImport } from './routes/organization'
+import { Route as PayrollRouteImport } from './routes/payroll'
+import { Route as PerformanceRouteImport } from './routes/performance'
+import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as RecruitmentRouteImport } from './routes/recruitment'
+import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as ShiftsRouteImport } from './routes/shifts'
+import { Route as SkillsRouteImport } from './routes/skills'
+import { Route as SuccessionRouteImport } from './routes/succession'
+import { Route as TasksRouteImport } from './routes/tasks'
+import { Route as WorkflowBuilderRouteImport } from './routes/workflow-builder'
+import { Route as WorkforcePlanningRouteImport } from './routes/workforce-planning'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as EmployeesIndexRouteImport } from './routes/employees.index'
 import { Route as EmployeesEmployeeIdRouteImport } from './routes/employees.$employeeId'
@@ -20,9 +50,159 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdministrationRoute = AdministrationRouteImport.update({
+  id: '/administration',
+  path: '/administration',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiAgentsRoute = AiAgentsRouteImport.update({
+  id: '/ai-agents',
+  path: '/ai-agents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiAuditRoute = AiAuditRouteImport.update({
+  id: '/ai-audit',
+  path: '/ai-audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApprovalCenterRoute = ApprovalCenterRouteImport.update({
   id: '/approval-center',
   path: '/approval-center',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AttendanceRoute = AttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BenefitsRoute = BenefitsRouteImport.update({
+  id: '/benefits',
+  path: '/benefits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CareerPathsRoute = CareerPathsRouteImport.update({
+  id: '/career-paths',
+  path: '/career-paths',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompensationRoute = CompensationRouteImport.update({
+  id: '/compensation',
+  path: '/compensation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComplianceRoute = ComplianceRouteImport.update({
+  id: '/compliance',
+  path: '/compliance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmployeeRelationsRoute = EmployeeRelationsRouteImport.update({
+  id: '/employee-relations',
+  path: '/employee-relations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExecutiveRoute = ExecutiveRouteImport.update({
+  id: '/executive',
+  path: '/executive',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GoalsRoute = GoalsRouteImport.update({
+  id: '/goals',
+  path: '/goals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntegrationsRoute = IntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InternalMobilityRoute = InternalMobilityRouteImport.update({
+  id: '/internal-mobility',
+  path: '/internal-mobility',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LearningRoute = LearningRouteImport.update({
+  id: '/learning',
+  path: '/learning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaveRoute = LeaveRouteImport.update({
+  id: '/leave',
+  path: '/leave',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrganizationRoute = OrganizationRouteImport.update({
+  id: '/organization',
+  path: '/organization',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayrollRoute = PayrollRouteImport.update({
+  id: '/payroll',
+  path: '/payroll',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerformanceRoute = PerformanceRouteImport.update({
+  id: '/performance',
+  path: '/performance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsRoute = ProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecruitmentRoute = RecruitmentRouteImport.update({
+  id: '/recruitment',
+  path: '/recruitment',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShiftsRoute = ShiftsRouteImport.update({
+  id: '/shifts',
+  path: '/shifts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SkillsRoute = SkillsRouteImport.update({
+  id: '/skills',
+  path: '/skills',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuccessionRoute = SuccessionRouteImport.update({
+  id: '/succession',
+  path: '/succession',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksRoute = TasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkflowBuilderRoute = WorkflowBuilderRouteImport.update({
+  id: '/workflow-builder',
+  path: '/workflow-builder',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkforcePlanningRoute = WorkforcePlanningRouteImport.update({
+  id: '/workforce-planning',
+  path: '/workforce-planning',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
@@ -43,14 +223,74 @@ const EmployeesEmployeeIdRoute = EmployeesEmployeeIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/administration': typeof AdministrationRoute
+  '/ai-agents': typeof AiAgentsRoute
+  '/ai-audit': typeof AiAuditRoute
+  '/analytics': typeof AnalyticsRoute
   '/approval-center': typeof ApprovalCenterRoute
+  '/attendance': typeof AttendanceRoute
+  '/benefits': typeof BenefitsRoute
+  '/career-paths': typeof CareerPathsRoute
+  '/compensation': typeof CompensationRoute
+  '/compliance': typeof ComplianceRoute
+  '/employee-relations': typeof EmployeeRelationsRoute
+  '/executive': typeof ExecutiveRoute
+  '/goals': typeof GoalsRoute
+  '/integrations': typeof IntegrationsRoute
+  '/internal-mobility': typeof InternalMobilityRoute
+  '/learning': typeof LearningRoute
+  '/leave': typeof LeaveRoute
+  '/notifications': typeof NotificationsRoute
+  '/onboarding': typeof OnboardingRoute
+  '/organization': typeof OrganizationRoute
+  '/payroll': typeof PayrollRoute
+  '/performance': typeof PerformanceRoute
+  '/projects': typeof ProjectsRoute
+  '/recruitment': typeof RecruitmentRoute
+  '/reports': typeof ReportsRoute
+  '/shifts': typeof ShiftsRoute
+  '/skills': typeof SkillsRoute
+  '/succession': typeof SuccessionRoute
+  '/tasks': typeof TasksRoute
+  '/workflow-builder': typeof WorkflowBuilderRoute
+  '/workforce-planning': typeof WorkforcePlanningRoute
   '/api/chat': typeof ApiChatRoute
   '/employees/$employeeId': typeof EmployeesEmployeeIdRoute
   '/employees/': typeof EmployeesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/administration': typeof AdministrationRoute
+  '/ai-agents': typeof AiAgentsRoute
+  '/ai-audit': typeof AiAuditRoute
+  '/analytics': typeof AnalyticsRoute
   '/approval-center': typeof ApprovalCenterRoute
+  '/attendance': typeof AttendanceRoute
+  '/benefits': typeof BenefitsRoute
+  '/career-paths': typeof CareerPathsRoute
+  '/compensation': typeof CompensationRoute
+  '/compliance': typeof ComplianceRoute
+  '/employee-relations': typeof EmployeeRelationsRoute
+  '/executive': typeof ExecutiveRoute
+  '/goals': typeof GoalsRoute
+  '/integrations': typeof IntegrationsRoute
+  '/internal-mobility': typeof InternalMobilityRoute
+  '/learning': typeof LearningRoute
+  '/leave': typeof LeaveRoute
+  '/notifications': typeof NotificationsRoute
+  '/onboarding': typeof OnboardingRoute
+  '/organization': typeof OrganizationRoute
+  '/payroll': typeof PayrollRoute
+  '/performance': typeof PerformanceRoute
+  '/projects': typeof ProjectsRoute
+  '/recruitment': typeof RecruitmentRoute
+  '/reports': typeof ReportsRoute
+  '/shifts': typeof ShiftsRoute
+  '/skills': typeof SkillsRoute
+  '/succession': typeof SuccessionRoute
+  '/tasks': typeof TasksRoute
+  '/workflow-builder': typeof WorkflowBuilderRoute
+  '/workforce-planning': typeof WorkforcePlanningRoute
   '/api/chat': typeof ApiChatRoute
   '/employees/$employeeId': typeof EmployeesEmployeeIdRoute
   '/employees': typeof EmployeesIndexRoute
@@ -58,7 +298,37 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/administration': typeof AdministrationRoute
+  '/ai-agents': typeof AiAgentsRoute
+  '/ai-audit': typeof AiAuditRoute
+  '/analytics': typeof AnalyticsRoute
   '/approval-center': typeof ApprovalCenterRoute
+  '/attendance': typeof AttendanceRoute
+  '/benefits': typeof BenefitsRoute
+  '/career-paths': typeof CareerPathsRoute
+  '/compensation': typeof CompensationRoute
+  '/compliance': typeof ComplianceRoute
+  '/employee-relations': typeof EmployeeRelationsRoute
+  '/executive': typeof ExecutiveRoute
+  '/goals': typeof GoalsRoute
+  '/integrations': typeof IntegrationsRoute
+  '/internal-mobility': typeof InternalMobilityRoute
+  '/learning': typeof LearningRoute
+  '/leave': typeof LeaveRoute
+  '/notifications': typeof NotificationsRoute
+  '/onboarding': typeof OnboardingRoute
+  '/organization': typeof OrganizationRoute
+  '/payroll': typeof PayrollRoute
+  '/performance': typeof PerformanceRoute
+  '/projects': typeof ProjectsRoute
+  '/recruitment': typeof RecruitmentRoute
+  '/reports': typeof ReportsRoute
+  '/shifts': typeof ShiftsRoute
+  '/skills': typeof SkillsRoute
+  '/succession': typeof SuccessionRoute
+  '/tasks': typeof TasksRoute
+  '/workflow-builder': typeof WorkflowBuilderRoute
+  '/workforce-planning': typeof WorkforcePlanningRoute
   '/api/chat': typeof ApiChatRoute
   '/employees/$employeeId': typeof EmployeesEmployeeIdRoute
   '/employees/': typeof EmployeesIndexRoute
@@ -67,21 +337,111 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/administration'
+    | '/ai-agents'
+    | '/ai-audit'
+    | '/analytics'
     | '/approval-center'
+    | '/attendance'
+    | '/benefits'
+    | '/career-paths'
+    | '/compensation'
+    | '/compliance'
+    | '/employee-relations'
+    | '/executive'
+    | '/goals'
+    | '/integrations'
+    | '/internal-mobility'
+    | '/learning'
+    | '/leave'
+    | '/notifications'
+    | '/onboarding'
+    | '/organization'
+    | '/payroll'
+    | '/performance'
+    | '/projects'
+    | '/recruitment'
+    | '/reports'
+    | '/shifts'
+    | '/skills'
+    | '/succession'
+    | '/tasks'
+    | '/workflow-builder'
+    | '/workforce-planning'
     | '/api/chat'
     | '/employees/$employeeId'
     | '/employees/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/administration'
+    | '/ai-agents'
+    | '/ai-audit'
+    | '/analytics'
     | '/approval-center'
+    | '/attendance'
+    | '/benefits'
+    | '/career-paths'
+    | '/compensation'
+    | '/compliance'
+    | '/employee-relations'
+    | '/executive'
+    | '/goals'
+    | '/integrations'
+    | '/internal-mobility'
+    | '/learning'
+    | '/leave'
+    | '/notifications'
+    | '/onboarding'
+    | '/organization'
+    | '/payroll'
+    | '/performance'
+    | '/projects'
+    | '/recruitment'
+    | '/reports'
+    | '/shifts'
+    | '/skills'
+    | '/succession'
+    | '/tasks'
+    | '/workflow-builder'
+    | '/workforce-planning'
     | '/api/chat'
     | '/employees/$employeeId'
     | '/employees'
   id:
     | '__root__'
     | '/'
+    | '/administration'
+    | '/ai-agents'
+    | '/ai-audit'
+    | '/analytics'
     | '/approval-center'
+    | '/attendance'
+    | '/benefits'
+    | '/career-paths'
+    | '/compensation'
+    | '/compliance'
+    | '/employee-relations'
+    | '/executive'
+    | '/goals'
+    | '/integrations'
+    | '/internal-mobility'
+    | '/learning'
+    | '/leave'
+    | '/notifications'
+    | '/onboarding'
+    | '/organization'
+    | '/payroll'
+    | '/performance'
+    | '/projects'
+    | '/recruitment'
+    | '/reports'
+    | '/shifts'
+    | '/skills'
+    | '/succession'
+    | '/tasks'
+    | '/workflow-builder'
+    | '/workforce-planning'
     | '/api/chat'
     | '/employees/$employeeId'
     | '/employees/'
@@ -89,7 +449,37 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdministrationRoute: typeof AdministrationRoute
+  AiAgentsRoute: typeof AiAgentsRoute
+  AiAuditRoute: typeof AiAuditRoute
+  AnalyticsRoute: typeof AnalyticsRoute
   ApprovalCenterRoute: typeof ApprovalCenterRoute
+  AttendanceRoute: typeof AttendanceRoute
+  BenefitsRoute: typeof BenefitsRoute
+  CareerPathsRoute: typeof CareerPathsRoute
+  CompensationRoute: typeof CompensationRoute
+  ComplianceRoute: typeof ComplianceRoute
+  EmployeeRelationsRoute: typeof EmployeeRelationsRoute
+  ExecutiveRoute: typeof ExecutiveRoute
+  GoalsRoute: typeof GoalsRoute
+  IntegrationsRoute: typeof IntegrationsRoute
+  InternalMobilityRoute: typeof InternalMobilityRoute
+  LearningRoute: typeof LearningRoute
+  LeaveRoute: typeof LeaveRoute
+  NotificationsRoute: typeof NotificationsRoute
+  OnboardingRoute: typeof OnboardingRoute
+  OrganizationRoute: typeof OrganizationRoute
+  PayrollRoute: typeof PayrollRoute
+  PerformanceRoute: typeof PerformanceRoute
+  ProjectsRoute: typeof ProjectsRoute
+  RecruitmentRoute: typeof RecruitmentRoute
+  ReportsRoute: typeof ReportsRoute
+  ShiftsRoute: typeof ShiftsRoute
+  SkillsRoute: typeof SkillsRoute
+  SuccessionRoute: typeof SuccessionRoute
+  TasksRoute: typeof TasksRoute
+  WorkflowBuilderRoute: typeof WorkflowBuilderRoute
+  WorkforcePlanningRoute: typeof WorkforcePlanningRoute
   ApiChatRoute: typeof ApiChatRoute
   EmployeesEmployeeIdRoute: typeof EmployeesEmployeeIdRoute
   EmployeesIndexRoute: typeof EmployeesIndexRoute
@@ -104,11 +494,221 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/administration': {
+      id: '/administration'
+      path: '/administration'
+      fullPath: '/administration'
+      preLoaderRoute: typeof AdministrationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-agents': {
+      id: '/ai-agents'
+      path: '/ai-agents'
+      fullPath: '/ai-agents'
+      preLoaderRoute: typeof AiAgentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-audit': {
+      id: '/ai-audit'
+      path: '/ai-audit'
+      fullPath: '/ai-audit'
+      preLoaderRoute: typeof AiAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/approval-center': {
       id: '/approval-center'
       path: '/approval-center'
       fullPath: '/approval-center'
       preLoaderRoute: typeof ApprovalCenterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/attendance': {
+      id: '/attendance'
+      path: '/attendance'
+      fullPath: '/attendance'
+      preLoaderRoute: typeof AttendanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/benefits': {
+      id: '/benefits'
+      path: '/benefits'
+      fullPath: '/benefits'
+      preLoaderRoute: typeof BenefitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/career-paths': {
+      id: '/career-paths'
+      path: '/career-paths'
+      fullPath: '/career-paths'
+      preLoaderRoute: typeof CareerPathsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compensation': {
+      id: '/compensation'
+      path: '/compensation'
+      fullPath: '/compensation'
+      preLoaderRoute: typeof CompensationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compliance': {
+      id: '/compliance'
+      path: '/compliance'
+      fullPath: '/compliance'
+      preLoaderRoute: typeof ComplianceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/employee-relations': {
+      id: '/employee-relations'
+      path: '/employee-relations'
+      fullPath: '/employee-relations'
+      preLoaderRoute: typeof EmployeeRelationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/executive': {
+      id: '/executive'
+      path: '/executive'
+      fullPath: '/executive'
+      preLoaderRoute: typeof ExecutiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/goals': {
+      id: '/goals'
+      path: '/goals'
+      fullPath: '/goals'
+      preLoaderRoute: typeof GoalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/integrations': {
+      id: '/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof IntegrationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/internal-mobility': {
+      id: '/internal-mobility'
+      path: '/internal-mobility'
+      fullPath: '/internal-mobility'
+      preLoaderRoute: typeof InternalMobilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/learning': {
+      id: '/learning'
+      path: '/learning'
+      fullPath: '/learning'
+      preLoaderRoute: typeof LearningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leave': {
+      id: '/leave'
+      path: '/leave'
+      fullPath: '/leave'
+      preLoaderRoute: typeof LeaveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/organization': {
+      id: '/organization'
+      path: '/organization'
+      fullPath: '/organization'
+      preLoaderRoute: typeof OrganizationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payroll': {
+      id: '/payroll'
+      path: '/payroll'
+      fullPath: '/payroll'
+      preLoaderRoute: typeof PayrollRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/performance': {
+      id: '/performance'
+      path: '/performance'
+      fullPath: '/performance'
+      preLoaderRoute: typeof PerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects': {
+      id: '/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof ProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recruitment': {
+      id: '/recruitment'
+      path: '/recruitment'
+      fullPath: '/recruitment'
+      preLoaderRoute: typeof RecruitmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shifts': {
+      id: '/shifts'
+      path: '/shifts'
+      fullPath: '/shifts'
+      preLoaderRoute: typeof ShiftsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/skills': {
+      id: '/skills'
+      path: '/skills'
+      fullPath: '/skills'
+      preLoaderRoute: typeof SkillsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/succession': {
+      id: '/succession'
+      path: '/succession'
+      fullPath: '/succession'
+      preLoaderRoute: typeof SuccessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks': {
+      id: '/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof TasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/workflow-builder': {
+      id: '/workflow-builder'
+      path: '/workflow-builder'
+      fullPath: '/workflow-builder'
+      preLoaderRoute: typeof WorkflowBuilderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/workforce-planning': {
+      id: '/workforce-planning'
+      path: '/workforce-planning'
+      fullPath: '/workforce-planning'
+      preLoaderRoute: typeof WorkforcePlanningRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/chat': {
@@ -137,7 +737,37 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdministrationRoute: AdministrationRoute,
+  AiAgentsRoute: AiAgentsRoute,
+  AiAuditRoute: AiAuditRoute,
+  AnalyticsRoute: AnalyticsRoute,
   ApprovalCenterRoute: ApprovalCenterRoute,
+  AttendanceRoute: AttendanceRoute,
+  BenefitsRoute: BenefitsRoute,
+  CareerPathsRoute: CareerPathsRoute,
+  CompensationRoute: CompensationRoute,
+  ComplianceRoute: ComplianceRoute,
+  EmployeeRelationsRoute: EmployeeRelationsRoute,
+  ExecutiveRoute: ExecutiveRoute,
+  GoalsRoute: GoalsRoute,
+  IntegrationsRoute: IntegrationsRoute,
+  InternalMobilityRoute: InternalMobilityRoute,
+  LearningRoute: LearningRoute,
+  LeaveRoute: LeaveRoute,
+  NotificationsRoute: NotificationsRoute,
+  OnboardingRoute: OnboardingRoute,
+  OrganizationRoute: OrganizationRoute,
+  PayrollRoute: PayrollRoute,
+  PerformanceRoute: PerformanceRoute,
+  ProjectsRoute: ProjectsRoute,
+  RecruitmentRoute: RecruitmentRoute,
+  ReportsRoute: ReportsRoute,
+  ShiftsRoute: ShiftsRoute,
+  SkillsRoute: SkillsRoute,
+  SuccessionRoute: SuccessionRoute,
+  TasksRoute: TasksRoute,
+  WorkflowBuilderRoute: WorkflowBuilderRoute,
+  WorkforcePlanningRoute: WorkforcePlanningRoute,
   ApiChatRoute: ApiChatRoute,
   EmployeesEmployeeIdRoute: EmployeesEmployeeIdRoute,
   EmployeesIndexRoute: EmployeesIndexRoute,
