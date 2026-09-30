@@ -1,4 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
+import { createClient } from "@supabase/supabase-js";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 
 import { modules } from "@/data/modules";
@@ -41,6 +42,52 @@ function workspaceSnapshot() {
   return `MODULE SIGNALS\n${moduleLines}\n\nAI RECOMMENDATIONS\n${recLines}\n\nEMPLOYEES\n${empLines}\n\nPENDING APPROVALS\n${apprLines}`;
 }
 
+async function uploadedSnapshot() {
+  const url = process.env["SUPABASE_URL"]!;
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
+  const sb = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input, init) => {
+        const h = new Headers(init?.headers);
+        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
+        h.set("apikey", key);
+        return fetch(input, { ...init, headers: h });
+      },
+    },
+  });
+  const { data, error } = await sb.from("uploaded_employees").select("*").limit(3000);
+  if (error) throw error;
+  const rows = data ?? [];
+  if (rows.length === 0) return { count: 0, text: "No employee data has been uploaded yet." };
+  const byDept: Record<string, number> = {};
+  for (const r of rows) byDept[r.department || "Unassigned"] = (byDept[r.department || "Unassigned"] ?? 0) + 1;
+  const lines = rows.map((r) =>
+    [r.name, r.title, r.department, r.location, r.manager && `mgr ${r.manager}`, r.grade, r.employment_type, r.joined && `joined ${r.joined}`, r.status,
+      r.salary != null && `salary ${r.salary}`, r.utilization != null && `util ${r.utilization}%`, r.goal_achievement != null && `goals ${r.goal_achievement}%`,
+      r.risk_flag && `flag ${r.risk_flag}`, Object.keys(r.extra ?? {}).length ? JSON.stringify(r.extra) : ""]
+      .filter(Boolean).join(" | "),
+  );
+  return {
+    count: rows.length,
+    text: `HEADCOUNT ${rows.length}\nBY DEPARTMENT: ${Object.entries(byDept).map(([d, n]) => `${d} ${n}`).join("; ")}\n\nEMPLOYEES\n${lines.join("\n")}`,
+  };
+}
+
+function uploadedPrompt(roleId: string | undefined, context: string | undefined, snap: { count: number; text: string }) {
+  const role = roles.find((r) => r.id === roleId) ?? roles[0]!;
+  return `You are Brite AI, the people-intelligence assistant inside an HR ERP platform.
+
+You are speaking with a user in the ${role.title} role (focus: ${role.focus}), viewing "${context ?? "/"}".
+
+The company's own uploaded employee data is below (${snap.count} records). Answer ONLY from this data. Do not use or mention any sample company, and never invent employees, figures or policies. If something needed (payroll runs, attendance, approvals) is not in the upload, say it is missing and what column or file would provide it.
+
+Work as Detect, Understand, Predict, Recommend, Compare, then state what needs human approval. Lead with the direct answer, back it with figures computed from the data, offer an alternative when proposing an action, and name who must approve sensitive actions. Short markdown, bullets over paragraphs.
+
+UPLOADED DATA
+${snap.text}`;
+}
+
 function systemPrompt(roleId?: string, context?: string) {
   const role = roles.find((r) => r.id === roleId) ?? roles[0]!;
   return `You are Brite AI, the people-intelligence assistant inside an HR ERP platform.
@@ -74,6 +121,7 @@ export async function handleChat(request: Request) {
     messages?: UIMessage[];
     roleId?: string;
     context?: string;
+    dataSource?: string;
   };
   const messages = Array.isArray(body.messages) ? body.messages : [];
   if (messages.length === 0) {
@@ -81,6 +129,19 @@ export async function handleChat(request: Request) {
       status: 400,
       headers: { "content-type": "application/json" },
     });
+  }
+
+  let system = systemPrompt(body.roleId, body.context);
+  if (body.dataSource === "uploaded") {
+    try {
+      system = uploadedPrompt(body.roleId, body.context, await uploadedSnapshot());
+    } catch (e) {
+      console.error(e);
+      return new Response(JSON.stringify({ error: "Could not load your uploaded data." }), {
+        status: 500,
+        headers: { "content-type": "application/json" },
+      });
+    }
   }
 
   const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
@@ -93,7 +154,7 @@ export async function handleChat(request: Request) {
 
   const result = streamText({
     model: provider.responses(MODEL),
-    system: systemPrompt(body.roleId, body.context),
+    system,
     messages: await convertToModelMessages(messages),
     abortSignal: request.signal,
     providerOptions: {
