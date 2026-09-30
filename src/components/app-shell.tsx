@@ -12,8 +12,8 @@ import { navGroups, roles } from "@/data/workspace";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [roleId, setRoleId] = useState(roles[0].id);
-  const role = roles.find((r) => r.id === roleId) ?? roles[0];
+  const [roleId, setRoleId] = useState(roles[0]!.id);
+  const role = roles.find((r) => r.id === roleId) ?? roles[0]!;
 
   return (
     <div className="flex min-h-screen bg-background">

@@ -42,7 +42,7 @@ function workspaceSnapshot() {
 }
 
 function systemPrompt(roleId?: string, context?: string) {
-  const role = roles.find((r) => r.id === roleId) ?? roles[0];
+  const role = roles.find((r) => r.id === roleId) ?? roles[0]!;
   return `You are Brite AI, the people-intelligence assistant inside an HR ERP platform.
 
 You are speaking with ${role.name}, whose role is ${role.title}. Their focus: ${role.focus}. They are currently viewing the screen at "${context ?? "/"}".
