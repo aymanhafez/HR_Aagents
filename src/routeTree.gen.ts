@@ -20,6 +20,7 @@ import { Route as BenefitsRouteImport } from './routes/benefits'
 import { Route as CareerPathsRouteImport } from './routes/career-paths'
 import { Route as CompensationRouteImport } from './routes/compensation'
 import { Route as ComplianceRouteImport } from './routes/compliance'
+import { Route as DataSourcesRouteImport } from './routes/data-sources'
 import { Route as EmployeeRelationsRouteImport } from './routes/employee-relations'
 import { Route as ExecutiveRouteImport } from './routes/executive'
 import { Route as GoalsRouteImport } from './routes/goals'
@@ -98,6 +99,11 @@ const CompensationRoute = CompensationRouteImport.update({
 const ComplianceRoute = ComplianceRouteImport.update({
   id: '/compliance',
   path: '/compliance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataSourcesRoute = DataSourcesRouteImport.update({
+  id: '/data-sources',
+  path: '/data-sources',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmployeeRelationsRoute = EmployeeRelationsRouteImport.update({
@@ -233,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/career-paths': typeof CareerPathsRoute
   '/compensation': typeof CompensationRoute
   '/compliance': typeof ComplianceRoute
+  '/data-sources': typeof DataSourcesRoute
   '/employee-relations': typeof EmployeeRelationsRoute
   '/executive': typeof ExecutiveRoute
   '/goals': typeof GoalsRoute
@@ -270,6 +277,7 @@ export interface FileRoutesByTo {
   '/career-paths': typeof CareerPathsRoute
   '/compensation': typeof CompensationRoute
   '/compliance': typeof ComplianceRoute
+  '/data-sources': typeof DataSourcesRoute
   '/employee-relations': typeof EmployeeRelationsRoute
   '/executive': typeof ExecutiveRoute
   '/goals': typeof GoalsRoute
@@ -308,6 +316,7 @@ export interface FileRoutesById {
   '/career-paths': typeof CareerPathsRoute
   '/compensation': typeof CompensationRoute
   '/compliance': typeof ComplianceRoute
+  '/data-sources': typeof DataSourcesRoute
   '/employee-relations': typeof EmployeeRelationsRoute
   '/executive': typeof ExecutiveRoute
   '/goals': typeof GoalsRoute
@@ -347,6 +356,7 @@ export interface FileRouteTypes {
     | '/career-paths'
     | '/compensation'
     | '/compliance'
+    | '/data-sources'
     | '/employee-relations'
     | '/executive'
     | '/goals'
@@ -384,6 +394,7 @@ export interface FileRouteTypes {
     | '/career-paths'
     | '/compensation'
     | '/compliance'
+    | '/data-sources'
     | '/employee-relations'
     | '/executive'
     | '/goals'
@@ -421,6 +432,7 @@ export interface FileRouteTypes {
     | '/career-paths'
     | '/compensation'
     | '/compliance'
+    | '/data-sources'
     | '/employee-relations'
     | '/executive'
     | '/goals'
@@ -459,6 +471,7 @@ export interface RootRouteChildren {
   CareerPathsRoute: typeof CareerPathsRoute
   CompensationRoute: typeof CompensationRoute
   ComplianceRoute: typeof ComplianceRoute
+  DataSourcesRoute: typeof DataSourcesRoute
   EmployeeRelationsRoute: typeof EmployeeRelationsRoute
   ExecutiveRoute: typeof ExecutiveRoute
   GoalsRoute: typeof GoalsRoute
@@ -562,6 +575,13 @@ declare module '@tanstack/react-router' {
       path: '/compliance'
       fullPath: '/compliance'
       preLoaderRoute: typeof ComplianceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-sources': {
+      id: '/data-sources'
+      path: '/data-sources'
+      fullPath: '/data-sources'
+      preLoaderRoute: typeof DataSourcesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/employee-relations': {
@@ -747,6 +767,7 @@ const rootRouteChildren: RootRouteChildren = {
   CareerPathsRoute: CareerPathsRoute,
   CompensationRoute: CompensationRoute,
   ComplianceRoute: ComplianceRoute,
+  DataSourcesRoute: DataSourcesRoute,
   EmployeeRelationsRoute: EmployeeRelationsRoute,
   ExecutiveRoute: ExecutiveRoute,
   GoalsRoute: GoalsRoute,

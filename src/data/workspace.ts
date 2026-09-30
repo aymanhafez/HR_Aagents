@@ -82,6 +82,7 @@ export const navGroups: NavGroup[] = [
   {
     label: "Administration",
     items: [
+      { label: "Data Sources", to: "/data-sources", icon: "Database" },
       { label: "Integrations", to: "/integrations", icon: "Plug" },
       { label: "Administration", to: "/administration", icon: "Settings" },
     ],

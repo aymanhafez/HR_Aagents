@@ -9,8 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { navGroups, roles } from "@/data/workspace";
+import { DataSourceProvider, useDataSource } from "@/lib/data-source";
 
 export function AppShell({ children }: { children: ReactNode }) {
+  return (
+    <DataSourceProvider>
+      <Shell>{children}</Shell>
+    </DataSourceProvider>
+  );
+}
+
+function Shell({ children }: { children: ReactNode }) {
+  const { source, setSource } = useDataSource();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [roleId, setRoleId] = useState(roles[0]!.id);
   const role = roles.find((r) => r.id === roleId) ?? roles[0]!;
@@ -64,6 +74,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             Ask anything about your workforce
           </div>
           <div className="ml-auto flex items-center gap-2">
+            <div className="flex rounded-md border border-border p-0.5 text-xs">
+              {(["seeded", "uploaded"] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSource(s)}
+                  className={`rounded px-2.5 py-1.5 font-medium transition-colors ${source === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  {s === "seeded" ? "Sample data" : "My data"}
+                </button>
+              ))}
+            </div>
             <Select value={roleId} onValueChange={setRoleId}>
               <SelectTrigger className="h-9 w-[210px] text-xs">
                 <SelectValue />
@@ -87,7 +108,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-[460px]">
-                <AssistantPanel role={role} context={pathname} />
+                <AssistantPanel key={source} role={role} context={pathname} dataSource={source} />
               </SheetContent>
             </Sheet>
           </div>
