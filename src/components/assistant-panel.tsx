@@ -68,12 +68,15 @@ export function AssistantPanel({ role, context }: { role: Role; context: string 
       <Conversation className="min-h-0 flex-1">
         <ConversationContent className="gap-4">
           {messages.length === 0 ? (
-            <ConversationEmptyState
-              icon={<img src={briteMark} alt="" width={44} height={44} className="h-11 w-11" />}
-              title="Ask about your workforce"
-              description="Detect, understand, predict and compare options before you decide."
-            >
-              <div className="mt-4 flex flex-col gap-2">
+            <ConversationEmptyState>
+              <img src={briteMark} alt="" width={44} height={44} className="h-11 w-11" />
+              <div className="space-y-1">
+                <h3 className="font-display text-sm font-semibold">Ask about your workforce</h3>
+                <p className="text-sm text-muted-foreground">
+                  Detect, understand, predict and compare options before you decide.
+                </p>
+              </div>
+              <div className="mt-2 flex w-full flex-col gap-2">
                 {SUGGESTIONS.map((s) => (
                   <Button
                     key={s}
@@ -90,7 +93,7 @@ export function AssistantPanel({ role, context }: { role: Role; context: string 
           ) : (
             messages.map((message) => (
               <Message key={message.id} from={message.role}>
-                <MessageContent variant={message.role === "user" ? "contained" : "flat"}>
+                <MessageContent>
                   {message.parts.map((part, i) =>
                     part.type === "text" ? (
                       <MessageResponse key={i}>{part.text}</MessageResponse>
