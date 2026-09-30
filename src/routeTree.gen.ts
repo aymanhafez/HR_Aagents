@@ -10,11 +10,19 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApprovalCenterRouteImport } from './routes/approval-center'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as EmployeesIndexRouteImport } from './routes/employees.index'
+import { Route as EmployeesEmployeeIdRouteImport } from './routes/employees.$employeeId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApprovalCenterRoute = ApprovalCenterRouteImport.update({
+  id: '/approval-center',
+  path: '/approval-center',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
@@ -22,31 +30,69 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmployeesIndexRoute = EmployeesIndexRouteImport.update({
+  id: '/employees/',
+  path: '/employees/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmployeesEmployeeIdRoute = EmployeesEmployeeIdRouteImport.update({
+  id: '/employees/$employeeId',
+  path: '/employees/$employeeId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/approval-center': typeof ApprovalCenterRoute
   '/api/chat': typeof ApiChatRoute
+  '/employees/$employeeId': typeof EmployeesEmployeeIdRoute
+  '/employees/': typeof EmployeesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/approval-center': typeof ApprovalCenterRoute
   '/api/chat': typeof ApiChatRoute
+  '/employees/$employeeId': typeof EmployeesEmployeeIdRoute
+  '/employees': typeof EmployeesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/approval-center': typeof ApprovalCenterRoute
   '/api/chat': typeof ApiChatRoute
+  '/employees/$employeeId': typeof EmployeesEmployeeIdRoute
+  '/employees/': typeof EmployeesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/chat'
+  fullPaths:
+    | '/'
+    | '/approval-center'
+    | '/api/chat'
+    | '/employees/$employeeId'
+    | '/employees/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/chat'
-  id: '__root__' | '/' | '/api/chat'
+  to:
+    | '/'
+    | '/approval-center'
+    | '/api/chat'
+    | '/employees/$employeeId'
+    | '/employees'
+  id:
+    | '__root__'
+    | '/'
+    | '/approval-center'
+    | '/api/chat'
+    | '/employees/$employeeId'
+    | '/employees/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApprovalCenterRoute: typeof ApprovalCenterRoute
   ApiChatRoute: typeof ApiChatRoute
+  EmployeesEmployeeIdRoute: typeof EmployeesEmployeeIdRoute
+  EmployeesIndexRoute: typeof EmployeesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,6 +104,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/approval-center': {
+      id: '/approval-center'
+      path: '/approval-center'
+      fullPath: '/approval-center'
+      preLoaderRoute: typeof ApprovalCenterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -65,12 +118,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/employees/': {
+      id: '/employees/'
+      path: '/employees'
+      fullPath: '/employees/'
+      preLoaderRoute: typeof EmployeesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/employees/$employeeId': {
+      id: '/employees/$employeeId'
+      path: '/employees/$employeeId'
+      fullPath: '/employees/$employeeId'
+      preLoaderRoute: typeof EmployeesEmployeeIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApprovalCenterRoute: ApprovalCenterRoute,
   ApiChatRoute: ApiChatRoute,
+  EmployeesEmployeeIdRoute: EmployeesEmployeeIdRoute,
+  EmployeesIndexRoute: EmployeesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
