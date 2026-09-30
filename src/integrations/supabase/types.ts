@@ -14,7 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      uploaded_employees: {
+        Row: {
+          created_at: string
+          department: string
+          employment_type: string
+          extra: Json
+          goal_achievement: number | null
+          grade: string
+          id: string
+          joined: string
+          location: string
+          manager: string
+          name: string
+          risk_flag: string
+          salary: number | null
+          status: string
+          title: string
+          utilization: number | null
+        }
+        Insert: {
+          created_at?: string
+          department?: string
+          employment_type?: string
+          extra?: Json
+          goal_achievement?: number | null
+          grade?: string
+          id?: string
+          joined?: string
+          location?: string
+          manager?: string
+          name: string
+          risk_flag?: string
+          salary?: number | null
+          status?: string
+          title?: string
+          utilization?: number | null
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          employment_type?: string
+          extra?: Json
+          goal_achievement?: number | null
+          grade?: string
+          id?: string
+          joined?: string
+          location?: string
+          manager?: string
+          name?: string
+          risk_flag?: string
+          salary?: number | null
+          status?: string
+          title?: string
+          utilization?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
