@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { agentForModule } from "@/data/agents";
+import { formFor } from "@/data/module-forms";
 import { employees } from "@/data/workspace";
 import { supabase } from "@/integrations/supabase/client";
 import { useDataSource } from "@/lib/data-source";
@@ -156,4 +157,8 @@ export function ModuleRecords({ slug, label, openSignal }: { slug: string; label
       )}
     </Card>
   );
+}
+
+function Field({ label, wide, children }: { label: string; wide?: boolean; children: React.ReactNode }) {
+  return <label className={`space-y-1 text-xs text-muted-foreground ${wide ? "sm:col-span-2" : ""}`}><span>{label}</span>{children}</label>;
 }
