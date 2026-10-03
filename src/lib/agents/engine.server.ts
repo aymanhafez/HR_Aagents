@@ -178,6 +178,13 @@ export async function advanceRun(runId: string) {
 
   const { data: steps } = await db().from("agent_steps").select("*").eq("run_id", runId).order("idx");
   const all = steps ?? [];
+  // Recover steps stuck "running" (e.g. the page closed mid-step and aborted the request).
+  const stale = all.find((s) => s.status === "running" && s.started_at && Date.now() - new Date(s.started_at).getTime() > 90_000);
+  if (stale) {
+    await db().from("agent_steps").update({ status: "pending" }).eq("id", stale.id);
+    stale.status = "pending";
+    await event(runId, "info", `Step ${stale.idx} was interrupted; retrying.`, stale.id);
+  }
   const step = all.find((s) => s.status === "pending");
   if (!step) return finalizeRun(runId);
 
