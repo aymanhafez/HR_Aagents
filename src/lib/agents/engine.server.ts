@@ -27,6 +27,7 @@ async function aiJson<T>(system: string, prompt: string): Promise<T> {
     model: provider.responses(MODEL),
     system,
     prompt,
+    abortSignal: AbortSignal.timeout(120_000),
     onError: ({ error }) => { streamErr = error; },
     providerOptions: {
       openai: { store: false, forceReasoning: true, reasoningEffort: "low", reasoningSummary: "auto", include: ["reasoning.encrypted_content"] },
@@ -178,6 +179,13 @@ export async function advanceRun(runId: string) {
 
   const { data: steps } = await db().from("agent_steps").select("*").eq("run_id", runId).order("idx");
   const all = steps ?? [];
+  // Recover steps stuck "running" (e.g. the page closed mid-step and aborted the request).
+  const stale = all.find((s) => s.status === "running" && s.started_at && Date.now() - new Date(s.started_at).getTime() > 90_000);
+  if (stale) {
+    await db().from("agent_steps").update({ status: "pending" }).eq("id", stale.id);
+    stale.status = "pending";
+    await event(runId, "info", `Step ${stale.idx} was interrupted; retrying.`, stale.id);
+  }
   const step = all.find((s) => s.status === "pending");
   if (!step) return finalizeRun(runId);
 
@@ -185,6 +193,13 @@ export async function advanceRun(runId: string) {
 
   if (step.tool === "request_approval") {
     const previous = all.filter((s) => s.status === "done").map((s) => `${s.title}: ${s.output?.result ?? ""}`).join("\n");
+    // Sample/seeded company: approvals are auto-granted so demo runs always complete.
+    if (run.data_source === "seeded" || (await seedOn())) {
+      await db().from("agent_approvals").insert({ run_id: runId, step_id: step.id, approver_role: agent.approver, reason: step.title, alternatives: "", risk: "high", status: "approved", note: "Auto-approved — sample company data", decided_at: new Date().toISOString() });
+      await db().from("agent_steps").update({ status: "done", started_at: new Date().toISOString(), finished_at: new Date().toISOString(), output: { result: `Approved automatically (sample company): ${step.title}`, evidence: "Auto-approval on sample data", confirmation: `${agent.approver} approval auto-granted` } }).eq("id", step.id);
+      await event(runId, "approval", `${agent.approver} approval auto-granted (sample company): ${step.title}`, step.id);
+      return { status: "running" };
+    }
     let reason = step.title, alternatives = "";
     try {
       const r = await aiJson<{ reason: string; alternatives: string }>(
