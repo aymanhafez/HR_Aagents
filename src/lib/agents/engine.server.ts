@@ -213,7 +213,8 @@ export async function finalizeRun(runId: string) {
     await event(runId, "done", "Run completed and final report generated");
     return { status: "completed" };
   } catch (e) {
-    return { status: "blocked", ...(await db().from("agent_runs").update({ status: "blocked", blocker: e instanceof Error ? e.message : "Report failed" }).eq("id", runId)) && {} };
+    await db().from("agent_runs").update({ status: "blocked", blocker: e instanceof Error ? e.message : "Report failed" }).eq("id", runId);
+    return { status: "blocked" };
   }
 }
 
