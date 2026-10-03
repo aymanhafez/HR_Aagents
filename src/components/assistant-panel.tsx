@@ -101,17 +101,17 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
                   {message.parts.map((part, i) => {
                     if (part.type === "text") return <MessageResponse key={i}>{part.text}</MessageResponse>;
                     if (part.type === "tool-start_agent_run") {
-                      const p = part as unknown as { state: "input-streaming" | "input-available" | "output-available" | "output-error"; input?: { objective?: string }; output?: { ok: boolean; run_id?: string; objective?: string; error?: string }; errorText?: string };
+                      const p = part as unknown as { state: "input-streaming" | "input-available" | "output-available" | "output-error"; input?: { objective?: string }; output?: { ok: boolean; run_id?: string; objective?: string; error?: string; ticket?: number | null }; errorText?: string };
                       const o = p.output;
                       return (
                         <div key={i} className="space-y-2">
                         <Tool defaultOpen={false}>
-                          <ToolHeader type="tool-start_agent_run" state={p.state} title={o?.ok ? "Agent action started" : "Starting agent action…"} />
+                          <ToolHeader type="tool-start_agent_run" state={p.state} title={o?.ok ? `Ticket ${o.ticket ? `#${o.ticket} ` : ""}opened · agent started` : "Starting agent action…"} />
                           <ToolContent>
                             <div className="space-y-1.5 p-3 text-xs">
                               <p className="text-muted-foreground">{o?.objective ?? p.input?.objective ?? ""}</p>
                               {o?.ok && o.run_id ? (
-                                <Link to="/agents/$runId" params={{ runId: o.run_id }} className="inline-block font-medium text-primary underline">Open agent run</Link>
+                                <span className="flex gap-3"><Link to="/agents/$runId" params={{ runId: o.run_id }} className="font-medium text-primary underline">Open agent run</Link><Link to="/tasks" className="font-medium text-primary underline">View ticket</Link></span>
                               ) : o && !o.ok ? <p className="text-destructive">{o.error}</p> : p.errorText ? <p className="text-destructive">{p.errorText}</p> : null}
                             </div>
                           </ToolContent>
