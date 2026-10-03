@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useDataSource } from "@/lib/data-source";
 import { mapRow } from "@/lib/uploaded-data";
+import { buildFullSeed, SEED_DEPARTMENTS, SEED_TAG } from "@/data/full-seed";
 
 export const Route = createFileRoute("/data-sources")({
   head: () => ({
@@ -27,11 +28,14 @@ export const Route = createFileRoute("/data-sources")({
 function DataSourcesPage() {
   const { source, setSource } = useDataSource();
   const [count, setCount] = useState<number | null>(null);
+  const [seedCount, setSeedCount] = useState(0);
   const [busy, setBusy] = useState(false);
 
   const refresh = async () => {
     const { count } = await supabase.from("uploaded_employees").select("id", { count: "exact", head: true });
     setCount(count ?? 0);
+    const s = await supabase.from("uploaded_employees").select("id", { count: "exact", head: true }).eq("extra->>seed", SEED_TAG);
+    setSeedCount(s.count ?? 0);
   };
   useEffect(() => { void refresh(); }, []);
 
@@ -69,6 +73,20 @@ function DataSourcesPage() {
     await refresh();
   };
 
+  const toggleSeed = async () => {
+    setBusy(true);
+    if (seedCount) {
+      const { error } = await supabase.from("uploaded_employees").delete().eq("extra->>seed", SEED_TAG);
+      if (error) toast.error(error.message); else toast.success("Full sample company turned off");
+    } else {
+      const { error } = await supabase.from("uploaded_employees").insert(buildFullSeed());
+      if (error) toast.error(error.message);
+      else { toast.success(`Full sample company loaded across ${SEED_DEPARTMENTS} departments`); setSource("uploaded"); }
+    }
+    await refresh();
+    setBusy(false);
+  };
+
   const downloadTemplate = () => {
     const csv = "Name,Title,Department,Location,Manager,Grade,Type,Joined,Status,Salary,Utilization,Goals,Risk\nJane Doe,Analyst,Finance,Cairo,John Smith,G4,Full time,2023-01-10,Active,42000,95,88,\n";
     const a = document.createElement("a");
@@ -98,6 +116,20 @@ function DataSourcesPage() {
           </Card>
         ))}
       </div>
+
+      <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
+        <div>
+          <p className="font-display font-semibold">Full sample company</p>
+          <p className="text-sm text-muted-foreground">
+            {seedCount
+              ? `On — ${seedCount} employees across ${SEED_DEPARTMENTS} departments, with salaries, performance, leave, overtime and skills. Agents can change these records.`
+              : `Load a complete company across ${SEED_DEPARTMENTS} departments into My data so agents can run full tasks.`}
+          </p>
+        </div>
+        <Button onClick={toggleSeed} disabled={busy} variant={seedCount ? "outline" : "default"}>
+          {busy ? "Working…" : seedCount ? "Turn off" : "Turn on"}
+        </Button>
+      </Card>
 
       <Card className="space-y-4 p-5">
         <div>
