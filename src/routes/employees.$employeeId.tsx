@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Brain } from "lucide-react";
 
+import { EmployeeChanges } from "@/components/employee-changes";
 import { PageHeader } from "@/components/page-parts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -86,6 +87,9 @@ function Employee360() {
         <Field label="Manager" value={employee.manager} />
         <Field label="AI flag" value={employee.riskFlag} highlight />
       </div>
+
+      <EmployeeChanges employeeKey={employee.id} />
+
 
       <Tabs defaultValue="Overview">
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-muted/60 p-1">
