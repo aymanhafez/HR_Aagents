@@ -220,12 +220,17 @@ export async function finalizeRun(runId: string) {
   const { data: steps } = await db().from("agent_steps").select("*").eq("run_id", runId).order("idx");
   const { data: appr } = await db().from("agent_approvals").select("*").eq("run_id", runId);
   if (!run) return { status: "missing" };
-  const lines = (steps ?? []).map((s) => `${s.idx}. [${s.status}] ${s.title}: ${s.output?.result ?? s.error ?? ""}`).join("\n");
+  const { data: tasks } = await db().from("chat_tasks").select("id, title, assignee_name, priority, due_date, status").eq("run_id", runId);
+  const lines = (steps ?? []).map((s) => {
+    const used = (s.output?.data_used ?? []).map((d: { source: string; detail: string }) => `${d.source}: ${d.detail}`).join("; ");
+    return `${s.idx}. [${s.status}] ${s.title}: ${s.output?.result ?? s.error ?? ""}${used ? `\n   Evidence: ${used}` : ""}${s.output?.confirmation ? `\n   SYSTEM CONFIRMATION: ${s.output.confirmation}` : ""}`;
+  }).join("\n");
+  const records = (tasks ?? []).map((t) => `Task ${t.id.slice(0, 8)} "${t.title}" assigned to ${t.assignee_name}, ${t.priority}, due ${t.due_date ?? "none"}, status ${t.status}`).join("\n");
   const decisions = (appr ?? []).map((a) => `${a.approver_role} ${a.status}: ${a.reason}${a.note ? ` (note: ${a.note})` : ""}`).join("\n");
   try {
     const report = await aiJson<Record<string, unknown>>(
-      `Write the final agent execution report. Return ONLY JSON {"objective": string, "completed": string[], "not_completed": string[], "decisions": string[], "issues": string[], "result": string, "impact": string, "recommendations": string[]}. Only state what the step log proves.`,
-      `Objective: ${run.objective}\nSteps:\n${lines}\nHuman decisions:\n${decisions || "none"}`,
+      `Write the final agent execution report. Return ONLY JSON {"objective": string, "completed": string[], "not_completed": string[], "decisions": string[], "issues": string[], "result": string, "impact": string, "recommendations": string[]}. Only state what the step log proves. "SYSTEM CONFIRMATION" lines and VERIFIED RECORDS were checked by Nayera directly in its database — treat them as proven and cite task IDs. Tasks live inside Nayera (Tasks page); do not call them external or unverified.`,
+      `Objective: ${run.objective}\nSteps:\n${lines}\nVERIFIED RECORDS IN NAYERA:\n${records || "none"}\nHuman decisions:\n${decisions || "none"}`,
     );
     await db().from("agent_runs").update({ status: "completed", progress: 100, report, blocker: "" }).eq("id", runId);
     await event(runId, "done", "Run completed and final report generated");
