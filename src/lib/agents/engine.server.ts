@@ -209,7 +209,7 @@ export async function advanceRun(runId: string) {
     const out = await aiJson<{ ok: boolean; result: string; evidence: string; required_data?: string[]; data_used?: { source: string; detail: string }[]; missing_data?: string[]; blocker?: string; record?: { title: string; employee_name?: string; details?: string; amount?: number | null; status?: string }; change?: { employee_name: string; field: string; new_value: string; reason?: string }; task?: { title: string; description: string; assignee_name: string; assignee_department: string; priority: string; due_date: string } }>(
       `You are ${agent.name} in the Nayera HR ERP (${agent.focus}). Execute ONE step using only the company data. First decide which data the step REQUIRES, then find it in the company data. Return ONLY JSON:
 {"ok": boolean, "result": string (markdown, concise, with figures), "required_data": string[] (data fields/records this step needs), "data_used": [{"source": string (e.g. "Employee e-1042 Ahmed Sabry", "Payroll KPI", "Uploaded employees: Support dept"), "detail": string (the exact figure/value taken)}], "missing_data": string[] (required items not found), "evidence": string (one-line summary of the proof), "blocker": string (only if ok=false: what is missing and who must provide it)${step.tool === "create_task" ? `, "task": {"title","description","assignee_name" (exact existing employee),"assignee_department","priority" (Low|Medium|High|Critical),"due_date" (YYYY-MM-DD, today ${new Date().toISOString().slice(0, 10)})}` : ""} ${step.tool === "create_record" ? `, "record": {"title" (plain record name; Nayera saves it to the database when you return it — never write 'not saved' or 'blocked' in it), "employee_name" (exact existing employee or empty), "details", "amount" (number or null), "status"}` : ""}${step.tool === "update_employee" ? `, "change": {"employee_name" (exact existing employee), "field" (salary|title|department|location|manager|grade|employment_type|status|risk_flag), "new_value" (final value; salary as a plain number, apply any human instruction), "reason"}` : ""}}
-Every figure in result must appear in data_used. Do the best possible work with the data available: state assumptions and list missing data, and set ok=true. Set ok=false ONLY when the step genuinely cannot be performed at all. Never invent employees or figures. Never claim an external action (email, posting) happened.
+Every figure in result must appear in data_used. Do the best possible work with the data available: state assumptions and list missing data, and set ok=true. Set ok=false ONLY when the step genuinely cannot be performed at all. COMPLETE THE TASK: the requester's message IS their confirmation; never ask them to confirm, clarify or re-submit. When a detail is not given, apply the standard default (annual leave, full single day, department head as approver, today as effective date, company currency) and state it as an assumption instead of listing it as missing or blocking. If a similarly named employee exists (same first name or same surname), use that employee and say so. Only list missing_data for facts that truly change the outcome. Never invent employees or figures. Never claim an external action (email, posting) happened.
 
 COMPANY DATA
 ${data}`,
@@ -313,7 +313,19 @@ ${data}`,
   }
 }
 
+async function syncTicket(runId: string, status: string, result: string) {
+  await db().from("chat_tickets").update({ status, result: result.slice(0, 4000) }).eq("run_id", runId);
+}
+
+export async function driveRun(runId: string, budgetMs = 45000) {
+  const end = Date.now() + budgetMs;
+  let r: { status: string } = { status: "running" };
+  while (Date.now() < end) { r = await advanceRun(runId); if (r.status !== "running") break; }
+  return r;
+}
+
 async function block(runId: string, stepId: string, reason: string) {
+  await syncTicket(runId, "Blocked", reason);
   await db().from("agent_steps").update({ status: "blocked", error: reason }).eq("id", stepId);
   await db().from("agent_runs").update({ status: "blocked", blocker: reason }).eq("id", runId);
   await event(runId, "blocker", `Blocked: ${reason}`, stepId);
@@ -345,6 +357,8 @@ export async function finalizeRun(runId: string) {
     );
     await db().from("agent_runs").update({ status: "completed", progress: 100, report, blocker: "" }).eq("id", runId);
     await event(runId, "done", "Run completed and final report generated");
+    const rep = report as { result?: string; completed?: string[]; issues?: string[] };
+    await syncTicket(runId, "Resolved", [rep.result ?? "", rep.completed?.length ? `Done: ${rep.completed.join("; ")}` : "", rep.issues?.length ? `Notes: ${rep.issues.join("; ")}` : ""].filter(Boolean).join("\n\n"));
     return { status: "completed" };
   } catch (e) {
     await db().from("agent_runs").update({ status: "blocked", blocker: e instanceof Error ? e.message : "Report failed" }).eq("id", runId);
@@ -373,6 +387,7 @@ export async function decideApproval(id: string, decision: "approve" | "reject" 
     }
   }
   await db().from("agent_runs").update({ status: "running" }).eq("id", a.run_id).eq("status", "waiting_approval");
+  await syncTicket(a.run_id, "In progress", `${a.approver_role} ${status}${note ? `: ${note}` : ""}. Agent continuing.`);
   await event(a.run_id, "approval", `${a.approver_role} ${status} the request${note ? `: ${note}` : ""}`, a.step_id ?? undefined);
   await updateProgress(a.run_id);
   return { ok: true };
