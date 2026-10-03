@@ -47,10 +47,33 @@ async function aiJson<T>(system: string, prompt: string): Promise<T> {
 }
 
 async function dataFor(source: string) {
-  const base = source === "uploaded" ? (await uploadedSnapshot()).text : workspaceSnapshot();
+  let base = source === "uploaded" ? (await uploadedSnapshot()).text : workspaceSnapshot();
+  if (source === "uploaded") {
+    const { data: sf } = await db().from("module_records").select("title, employee_name, details, amount").eq("module", "seed_data").eq("data_source", "uploaded").order("created_at").limit(400);
+    if (sf?.length) base += `\n\nSEEDED COMPANY DATA (part of the company system of record — use it as real data)\n${sf.map((r) => `${r.title}${r.employee_name ? ` [${r.employee_name}]` : ""}: ${r.details}${r.amount != null ? ` (value ${r.amount})` : ""}`).join("\n")}`;
+  }
   const { data: ch } = await db().from("employee_changes").select("employee_name, field, old_value, new_value, created_at").eq("data_source", source).order("created_at").limit(300);
   if (!ch?.length) return base;
   return `${base}\n\nAPPROVED RECORD CHANGES (already applied, latest wins)\n${ch.map((c) => `${c.created_at.slice(0, 10)} ${c.employee_name}: ${c.field} ${c.old_value || "—"} → ${c.new_value}`).join("\n")}`;
+}
+
+async function seedOn() {
+  const { count } = await db().from("uploaded_employees").select("id", { count: "exact", head: true }).eq("extra->>seed", "full-sample");
+  return (count ?? 0) > 0;
+}
+
+async function fillMissing(run: { id: string; objective: string }, step: { title: string }, missing: string[], data: string) {
+  const r = await aiJson<{ items: { title: string; employee_name?: string; details: string; amount?: number | null }[] }>(
+    `You generate realistic sample data for a demo HR company so an agent can finish its task. Return ONLY JSON {"items":[{"title": string (what the data is, e.g. "Salary band G5", "Leave policy", "Payroll run Sept 2026"), "employee_name": string (exact existing employee or ""), "details": string (the concrete values), "amount": number|null}]}. Provide one item per missing data need, consistent with the existing company data (same employees, departments, currency, grades). Never create new employees.`,
+    `Objective: ${run.objective}\nStep: ${step.title}\nMissing data:\n- ${missing.join("\n- ")}\n\nEXISTING COMPANY DATA\n${data.slice(0, 60000)}`,
+  );
+  const items = (r.items ?? []).filter((i) => i?.title && i?.details).slice(0, 12);
+  if (!items.length) return 0;
+  const { error } = await db().from("module_records").insert(items.map((i) => ({
+    module: "seed_data", data_source: "uploaded", title: i.title.slice(0, 200), employee_name: i.employee_name ?? "",
+    details: i.details, amount: typeof i.amount === "number" ? i.amount : null, status: "Seeded", created_by: "seed", run_id: run.id,
+  })));
+  return error ? 0 : items.length;
 }
 
 const EDITABLE = ["salary", "title", "department", "location", "manager", "grade", "employment_type", "status", "risk_flag"];
@@ -196,6 +219,15 @@ ${data}`,
     const required = Array.isArray(out.required_data) ? out.required_data.filter((x) => typeof x === "string") : [];
     const used = Array.isArray(out.data_used) ? out.data_used.filter((d) => d && typeof d.source === "string" && d.source.trim()) : [];
     const missing = Array.isArray(out.missing_data) ? out.missing_data.filter((x) => typeof x === "string" && x.trim()) : [];
+    // Full sample company on: generate the missing data as seeded records, then redo the step with it.
+    if (missing.length && run.data_source === "uploaded" && !step.input?.seed_filled && (await seedOn())) {
+      const filled = await fillMissing(run, step, missing, data).catch(() => 0);
+      if (filled > 0) {
+        await db().from("agent_steps").update({ status: "pending", input: { ...(step.input ?? {}), seed_filled: true } }).eq("id", step.id);
+        await event(runId, "info", `Seeded ${filled} missing data item(s) from the full sample company: ${missing.join("; ").slice(0, 300)}`, step.id);
+        return { status: "running" };
+      }
+    }
     const checks: { check: string; passed: boolean; detail: string }[] = [];
     // Partial progress with documented gaps still counts; block only when nothing usable came back.
     let valid = result.trim().length > 80 || (out.ok && result.trim().length > 10);
