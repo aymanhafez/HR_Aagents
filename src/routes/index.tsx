@@ -224,8 +224,8 @@ function SummaryTile({
         : "bg-[var(--success)]/12 text-[var(--success)]";
   return (
     <Card className="flex-row items-center gap-4 p-4 shadow-[var(--shadow-card)]">
-      <span className={`flex h-10 w-10 items-center justify-center rounded-lg ${toneClass}`}>{icon}</span>
-      <div>
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${toneClass}`}>{icon}</span>
+      <div className="min-w-0">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
         <p className="font-display text-xl font-semibold">{value}</p>
         <p className="text-xs text-muted-foreground">{note}</p>

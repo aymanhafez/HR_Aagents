@@ -57,19 +57,19 @@ export function StartAgentForm({ defaultAgent }: { defaultAgent?: string }) {
         <p className="font-display text-sm font-semibold">Start an agent</p>
       </div>
       <Textarea value={objective} onChange={(e) => setObjective(e.target.value)} placeholder="e.g. Hire a Senior Data Analyst for my team" rows={2} />
-      <div className="flex flex-wrap gap-2">
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_8rem_auto]">
         <Select value={agent} onValueChange={setAgent}>
-          <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full min-w-0"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="auto">Let Nayera choose the agent</SelectItem>
             {agents.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={priority} onValueChange={setPriority}>
-          <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
           <SelectContent>{["Low", "Medium", "High", "Critical"].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
         </Select>
-        <Button className="ml-auto gap-2" disabled={pending || objective.trim().length < 3} onClick={() => run(objective, agent === "auto" ? undefined : agent, priority)}>
+        <Button className="w-full gap-2 sm:w-auto" disabled={pending || objective.trim().length < 3} onClick={() => run(objective, agent === "auto" ? undefined : agent, priority)}>
           {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
           {pending ? "Planning…" : "Start agent"}
         </Button>

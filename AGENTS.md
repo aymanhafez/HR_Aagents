@@ -9,3 +9,4 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 - Agent runs execute step-by-step on the server (one step per `advanceAgentRun` call, driven by the open run page); the agent_* tables are the single source of truth and the UI follows them via realtime. Why: avoids request timeouts and keeps every step auditable.
+- Shared responsive behavior belongs in the app shell and reusable page components, with mobile navigation in a drawer and wide data tables scrolling inside their cards. Why: keeps every module usable without duplicating layout fixes.
