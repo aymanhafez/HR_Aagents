@@ -223,7 +223,7 @@ ${data}`,
     if (missing.length && run.data_source === "uploaded" && !step.input?.seed_filled && (await seedOn())) {
       const filled = await fillMissing(run, step, missing, data).catch(() => 0);
       if (filled > 0) {
-        await db().from("agent_steps").update({ status: "pending", input: { ...(step.input ?? {}), seed_filled: true } }).eq("id", step.id);
+        await db().from("agent_steps").update({ status: "pending", attempts: step.attempts, input: { ...(step.input ?? {}), seed_filled: true } }).eq("id", step.id);
         await event(runId, "info", `Seeded ${filled} missing data item(s) from the full sample company: ${missing.join("; ").slice(0, 300)}`, step.id);
         return { status: "running" };
       }
