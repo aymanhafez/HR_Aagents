@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
+import type { Role } from "@/data/workspace";
 import { MessageSquareText, Search, Bell } from "lucide-react";
 
 import nayeraMark from "@/assets/nayera-mark.png";
@@ -10,6 +11,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { navGroups, roles } from "@/data/workspace";
 import { DataSourceProvider, useDataSource } from "@/lib/data-source";
+
+const RoleCtx = createContext<Role | null>(null);
+export const useCurrentRole = () => useContext(RoleCtx) ?? roles[0]!;
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -26,6 +30,7 @@ function Shell({ children }: { children: ReactNode }) {
   const role = roles.find((r) => r.id === roleId) ?? roles[0]!;
 
   return (
+    <RoleCtx.Provider value={role}>
     <div className="flex min-h-screen bg-background">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto bg-sidebar text-sidebar-foreground lg:flex">
         <div className="flex items-center gap-3 px-5 py-5">
@@ -117,5 +122,6 @@ function Shell({ children }: { children: ReactNode }) {
         <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">{children}</main>
       </div>
     </div>
+    </RoleCtx.Provider>
   );
 }
