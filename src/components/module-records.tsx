@@ -55,7 +55,7 @@ export function ModuleRecords({ slug, label, openSignal }: { slug: string; label
     if (!f.title.trim()) { toast.error(`Add ${form.titleLabel.toLowerCase()} first.`); return; }
     const miss = form.fields.find((fd) => fd.required && !extra[fd.key]?.trim());
     if (miss) { toast.error(`${miss.label} is required.`); return; }
-    if (extra.start && extra.end && extra.end < extra.start) { toast.error("End date must be after start date."); return; }
+    if (extra["start"] && extra["end"] && extra["end"] < extra["start"]) { toast.error("End date must be after start date."); return; }
     setSaving(true);
     const amount = parseFloat(f.amount);
     const details = form.fields.filter((fd) => extra[fd.key]?.trim()).map((fd) => `${fd.label}: ${extra[fd.key]!.trim().slice(0, 1000)}`).join(" · ");
