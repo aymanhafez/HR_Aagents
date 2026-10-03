@@ -169,7 +169,7 @@ ${data}`,
   const ins = await db().from("agent_steps").insert(rows);
   if (ins.error) throw ins.error;
   await event(run.id, "info", `Run started by ${role.title}. ${agentById[agentId]!.name} planned ${rows.length} steps.`);
-  return { id: run.id as string };
+  return { id: run.id as string, agent: run.agent as string };
 }
 
 export async function advanceRun(runId: string) {
