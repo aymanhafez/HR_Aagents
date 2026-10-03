@@ -45,8 +45,17 @@ export function ModuleRecords({ slug, label, openSignal }: { slug: string; label
       return data as Rec[];
     },
   });
+  const [fresh, setFresh] = useState<Set<string>>(new Set());
+  const markFresh = (ids: string[]) => {
+    if (!ids.length) return;
+    setFresh((s) => new Set([...s, ...ids]));
+    setTimeout(() => setFresh((s) => { const n = new Set(s); ids.forEach((i) => n.delete(i)); return n; }), 12000);
+  };
   useEffect(() => {
-    const ch = supabase.channel(`recs-${slug}`).on("postgres_changes", { event: "*", schema: "public", table: "module_records" }, () => recs.refetch()).subscribe();
+    const ch = supabase.channel(`recs-${slug}`).on("postgres_changes", { event: "*", schema: "public", table: "module_records" }, (p) => {
+      if (p.eventType === "INSERT" && (p.new as Rec).module === slug) markFresh([(p.new as Rec).id]);
+      recs.refetch();
+    }).subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
