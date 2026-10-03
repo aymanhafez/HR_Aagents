@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { ChatTasks } from "@/components/chat-tasks";
+import { ChatTickets } from "@/components/chat-tickets";
 import { ModulePage } from "@/components/module-page";
 
 export const Route = createFileRoute("/tasks")({
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/tasks")({
   }),
   component: () => (
     <div className="space-y-5">
-      <div className="mx-auto max-w-7xl"><ChatTasks /></div>
+      <div className="mx-auto max-w-7xl space-y-5"><ChatTickets /><ChatTasks /></div>
       <ModulePage slug="tasks" />
     </div>
   ),

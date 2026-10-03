@@ -138,7 +138,7 @@ export async function startRun(input: { agent?: string | undefined; objective: s
 
   const plan = await aiJson<{ agent: string; summary: string; steps: { title: string; tool: string; detail: string }[] }>(
     `You are the Nayera agent planner inside an HR ERP. Return ONLY JSON: {"agent": string, "summary": string, "steps": [{"title": string, "tool": string, "detail": string}]}.
-Pick the agent id ${fixed ? `"${fixed.id}" (fixed)` : "best suited from the list"}. Write 4 to 8 concrete, executable steps that complete the business process end to end.
+Pick the agent id ${fixed ? `"${fixed.id}" (fixed)` : "best suited from the list"}. Write 3 to 6 concrete, executable steps that DELIVER the requested outcome end to end — the fewest steps needed. Do not add verification, intake, clarification or "confirm with requester" steps: the request itself is the confirmation, and missing details take standard defaults. The step that produces the requested outcome (create_record, update_employee, create_task) must be in the plan.
 Allowed tools: analyze (reason over company data), search_employees (find people), compute_metric (calculate a figure), draft_document (write a JD, letter, plan, memo), create_task (assign follow-up work to a real employee), request_approval (human sign-off), create_record (save ONE new record in this agent's feature area, e.g. a leave request, job requisition, training enrolment, review, case, benefit claim), update_employee (apply ONE approved change to an employee record: salary, title, department, location, manager, grade, employment_type, status, risk_flag), note (record a finding).
 Whenever the objective changes an employee record (raise, promotion, transfer, title/grade change, termination -> status), add a request_approval step and then one update_employee step per change AFTER it, so the approved decision is actually saved.
 Any salary, hiring, offer, promotion, termination, payroll release, contract or headcount action MUST be preceded by a request_approval step. Only reference employees in the data.
@@ -169,7 +169,7 @@ ${data}`,
   const ins = await db().from("agent_steps").insert(rows);
   if (ins.error) throw ins.error;
   await event(run.id, "info", `Run started by ${role.title}. ${agentById[agentId]!.name} planned ${rows.length} steps.`);
-  return { id: run.id as string };
+  return { id: run.id as string, agent: agentById[agentId]!.name };
 }
 
 export async function advanceRun(runId: string) {
@@ -196,6 +196,7 @@ export async function advanceRun(runId: string) {
     await db().from("agent_approvals").insert({ run_id: runId, step_id: step.id, approver_role: agent.approver, reason, alternatives, risk: "high" });
     await db().from("agent_steps").update({ status: "waiting", started_at: new Date().toISOString() }).eq("id", step.id);
     await db().from("agent_runs").update({ status: "waiting_approval" }).eq("id", runId);
+    await syncTicket(runId, "Waiting approval", `Waiting for ${agent.approver} approval: ${step.title}`);
     await event(runId, "approval", `Waiting for ${agent.approver} approval: ${step.title}`, step.id);
     return { status: "waiting_approval" };
   }
@@ -209,7 +210,7 @@ export async function advanceRun(runId: string) {
     const out = await aiJson<{ ok: boolean; result: string; evidence: string; required_data?: string[]; data_used?: { source: string; detail: string }[]; missing_data?: string[]; blocker?: string; record?: { title: string; employee_name?: string; details?: string; amount?: number | null; status?: string }; change?: { employee_name: string; field: string; new_value: string; reason?: string }; task?: { title: string; description: string; assignee_name: string; assignee_department: string; priority: string; due_date: string } }>(
       `You are ${agent.name} in the Nayera HR ERP (${agent.focus}). Execute ONE step using only the company data. First decide which data the step REQUIRES, then find it in the company data. Return ONLY JSON:
 {"ok": boolean, "result": string (markdown, concise, with figures), "required_data": string[] (data fields/records this step needs), "data_used": [{"source": string (e.g. "Employee e-1042 Ahmed Sabry", "Payroll KPI", "Uploaded employees: Support dept"), "detail": string (the exact figure/value taken)}], "missing_data": string[] (required items not found), "evidence": string (one-line summary of the proof), "blocker": string (only if ok=false: what is missing and who must provide it)${step.tool === "create_task" ? `, "task": {"title","description","assignee_name" (exact existing employee),"assignee_department","priority" (Low|Medium|High|Critical),"due_date" (YYYY-MM-DD, today ${new Date().toISOString().slice(0, 10)})}` : ""} ${step.tool === "create_record" ? `, "record": {"title" (plain record name; Nayera saves it to the database when you return it — never write 'not saved' or 'blocked' in it), "employee_name" (exact existing employee or empty), "details", "amount" (number or null), "status"}` : ""}${step.tool === "update_employee" ? `, "change": {"employee_name" (exact existing employee), "field" (salary|title|department|location|manager|grade|employment_type|status|risk_flag), "new_value" (final value; salary as a plain number, apply any human instruction), "reason"}` : ""}}
-Every figure in result must appear in data_used. Do the best possible work with the data available: state assumptions and list missing data, and set ok=true. Set ok=false ONLY when the step genuinely cannot be performed at all. Never invent employees or figures. Never claim an external action (email, posting) happened.
+Every figure in result must appear in data_used. Do the best possible work with the data available: state assumptions and list missing data, and set ok=true. Set ok=false ONLY when the step genuinely cannot be performed at all. COMPLETE THE TASK: the requester's message IS their confirmation; never ask them to confirm, clarify or re-submit. When a detail is not given, apply the standard default (annual leave, full single day, department head as approver, today as effective date, company currency) and state it as an assumption instead of listing it as missing or blocking. If a similarly named employee exists (same first name or same surname), use that employee and say so. Only list missing_data for facts that truly change the outcome. Never invent employees or figures. Never claim an external action (email, posting) happened.
 
 COMPANY DATA
 ${data}`,
@@ -313,7 +314,19 @@ ${data}`,
   }
 }
 
+async function syncTicket(runId: string, status: string, result: string) {
+  await db().from("chat_tickets").update({ status, result: result.slice(0, 4000) }).eq("run_id", runId);
+}
+
+export async function driveRun(runId: string, budgetMs = 45000) {
+  const end = Date.now() + budgetMs;
+  let r: { status: string } = { status: "running" };
+  while (Date.now() < end) { r = await advanceRun(runId); if (r.status !== "running") break; }
+  return r;
+}
+
 async function block(runId: string, stepId: string, reason: string) {
+  await syncTicket(runId, "Blocked", reason);
   await db().from("agent_steps").update({ status: "blocked", error: reason }).eq("id", stepId);
   await db().from("agent_runs").update({ status: "blocked", blocker: reason }).eq("id", runId);
   await event(runId, "blocker", `Blocked: ${reason}`, stepId);
@@ -340,11 +353,13 @@ export async function finalizeRun(runId: string) {
   const decisions = (appr ?? []).map((a) => `${a.approver_role} ${a.status}: ${a.reason}${a.note ? ` (note: ${a.note})` : ""}`).join("\n");
   try {
     const report = await aiJson<Record<string, unknown>>(
-      `Write the final agent execution report. Return ONLY JSON {"objective": string, "completed": string[], "not_completed": string[], "decisions": string[], "issues": string[], "result": string, "impact": string, "recommendations": string[]}. Only state what the step log proves. "SYSTEM CONFIRMATION" lines and VERIFIED RECORDS were checked by Nayera directly in its database — treat them as proven and cite task IDs. Tasks live inside Nayera (Tasks page); do not call them external or unverified.`,
+      `Write the final agent execution report. Return ONLY JSON {"objective": string, "completed": string[], "not_completed": string[], "decisions": string[], "issues": string[], "result": string, "impact": string, "recommendations": string[]}. Only state what the step log proves. Judge success by the requested outcome: if the record/change/task that the objective asked for was saved (VERIFIED RECORDS) the objective IS completed — say so plainly in "result", listing assumptions as notes, not as blockers. "SYSTEM CONFIRMATION" lines and VERIFIED RECORDS were checked by Nayera directly in its database — treat them as proven and cite task IDs. Tasks live inside Nayera (Tasks page); do not call them external or unverified.`,
       `Objective: ${run.objective}\nSteps:\n${lines}\nVERIFIED RECORDS IN NAYERA:\n${records || "none"}\nHuman decisions:\n${decisions || "none"}`,
     );
     await db().from("agent_runs").update({ status: "completed", progress: 100, report, blocker: "" }).eq("id", runId);
     await event(runId, "done", "Run completed and final report generated");
+    const rep = report as { result?: string; completed?: string[]; issues?: string[] };
+    await syncTicket(runId, "Resolved", [rep.result ?? "", rep.completed?.length ? `Done: ${rep.completed.join("; ")}` : "", rep.issues?.length ? `Notes: ${rep.issues.join("; ")}` : ""].filter(Boolean).join("\n\n"));
     return { status: "completed" };
   } catch (e) {
     await db().from("agent_runs").update({ status: "blocked", blocker: e instanceof Error ? e.message : "Report failed" }).eq("id", runId);
@@ -373,6 +388,7 @@ export async function decideApproval(id: string, decision: "approve" | "reject" 
     }
   }
   await db().from("agent_runs").update({ status: "running" }).eq("id", a.run_id).eq("status", "waiting_approval");
+  await syncTicket(a.run_id, "In progress", `${a.approver_role} ${status}${note ? `: ${note}` : ""}. Agent continuing.`);
   await event(a.run_id, "approval", `${a.approver_role} ${status} the request${note ? `: ${note}` : ""}`, a.step_id ?? undefined);
   await updateProgress(a.run_id);
   return { ok: true };

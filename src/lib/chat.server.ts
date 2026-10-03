@@ -172,7 +172,11 @@ Decide on every message: if the user wants something DONE that changes records o
         try {
           const { startRun } = await import("@/lib/agents/engine.server");
           const r = await startRun({ objective: input.objective, roleId: body.roleId ?? "", priority: input.priority, dataSource: body.dataSource === "uploaded" ? "uploaded" : "seeded" });
-          return { ok: true as const, run_id: r.id, objective: input.objective };
+          const { data: tk } = await publicClient().from("chat_tickets").insert({
+            request: sourceQuestion || input.objective, objective: input.objective, run_id: r.id, agent: r.agent ?? "",
+            role: body.roleId ?? "", data_source: body.dataSource === "uploaded" ? "uploaded" : "seeded", status: "In progress",
+          }).select("number").single();
+          return { ok: true as const, run_id: r.id, objective: input.objective, ticket: tk?.number ?? null };
         } catch (e) {
           return { ok: false as const, error: e instanceof Error ? e.message : "Could not start the agent" };
         }

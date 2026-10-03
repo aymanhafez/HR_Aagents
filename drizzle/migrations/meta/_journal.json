@@ -15,6 +15,13 @@
       "when": 1791042953384,
       "tag": "0001_module_records",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791047856926,
+      "tag": "0002_chat_tickets",
+      "breakpoints": true
     }
   ]
 }
