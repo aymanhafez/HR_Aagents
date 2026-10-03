@@ -20,7 +20,8 @@ import {
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Tool, ToolContent, ToolHeader } from "@/components/ai-elements/tool";
 import { Link } from "@tanstack/react-router";
-import { ListChecks } from "lucide-react";
+import { Bot, ListChecks } from "lucide-react";
+import { useStartRun } from "@/components/agents/agent-parts";
 import { Button } from "@/components/ui/button";
 import type { Role } from "@/data/workspace";
 
@@ -46,6 +47,11 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
   });
 
   const busy = status === "submitted" || status === "streaming";
+  const { run: startRun, pending: starting } = useStartRun();
+  const handoff = () => {
+    const text = messages.map((m) => `${m.role === "user" ? "User" : "Nayera"}: ${m.parts.map((p) => (p.type === "text" ? p.text : "")).join(" ")}`).join("\n").slice(-900);
+    startRun(`Carry out the action agreed in this conversation:\n${text}`, undefined, "High");
+  };
 
   useEffect(() => {
     if (!busy) textareaRef.current?.focus();
@@ -155,6 +161,12 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
           >
             <ListChecks className="h-3.5 w-3.5" />
             Create task from this chat
+          </Button>
+        )}
+        {messages.length > 0 && (
+          <Button variant="outline" size="sm" className="mb-2 w-full gap-2 text-xs" disabled={busy || starting} onClick={handoff}>
+            <Bot className="h-3.5 w-3.5" />
+            {starting ? "Planning agent run…" : "Run this as an agent"}
           </Button>
         )}
         <PromptInput

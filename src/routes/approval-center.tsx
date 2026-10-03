@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { approvals } from "@/data/workspace";
 import { agentById } from "@/data/agents";
 import { useAgentRealtime, usePendingAgentApprovals } from "@/lib/agents/client";
-import { ApprovalCard } from "@/routes/agents.$runId";
+import { ApprovalCard } from "@/components/agents/approval-card";
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/approval-center")({
