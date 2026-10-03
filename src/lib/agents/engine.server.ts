@@ -2,12 +2,12 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
 
 import { agentById, agents } from "@/data/agents";
-import { roles } from "@/data/workspace";
+import { employees, roles } from "@/data/workspace";
 import { publicClient, uploadedSnapshot, workspaceSnapshot } from "@/lib/chat.server";
 import { createLovableAiGatewayRunIdFetch } from "@/lib/run-id.ts";
 
 const MODEL = "openai/gpt-6-astra";
-const TOOLS = ["analyze", "search_employees", "compute_metric", "draft_document", "create_task", "request_approval", "note"];
+const TOOLS = ["analyze", "search_employees", "compute_metric", "draft_document", "create_task", "request_approval", "update_employee", "note"];
 const SENSITIVE = /salary|hire|hiring|offer|promot|terminat|dismiss|payroll release|release payroll|contract|headcount|disciplin/i;
 
 class GatewayStop extends Error {}
@@ -47,8 +47,49 @@ async function aiJson<T>(system: string, prompt: string): Promise<T> {
 }
 
 async function dataFor(source: string) {
-  if (source === "uploaded") return (await uploadedSnapshot()).text;
-  return workspaceSnapshot();
+  const base = source === "uploaded" ? (await uploadedSnapshot()).text : workspaceSnapshot();
+  const { data: ch } = await db().from("employee_changes").select("employee_name, field, old_value, new_value, created_at").eq("data_source", source).order("created_at").limit(300);
+  if (!ch?.length) return base;
+  return `${base}\n\nAPPROVED RECORD CHANGES (already applied, latest wins)\n${ch.map((c) => `${c.created_at.slice(0, 10)} ${c.employee_name}: ${c.field} ${c.old_value || "—"} → ${c.new_value}`).join("\n")}`;
+}
+
+const EDITABLE = ["salary", "title", "department", "location", "manager", "grade", "employment_type", "status", "risk_flag"];
+
+async function applyEmployeeChange(run: { id: string; data_source: string }, c: { employee_name: string; field: string; new_value: string; reason?: string }, approval: { id: string; approver_role: string }) {
+  const field = String(c.field ?? "").toLowerCase().replace(/\s+/g, "_");
+  if (!EDITABLE.includes(field)) return { ok: false, detail: `Field "${c.field}" cannot be changed (allowed: ${EDITABLE.join(", ")})` };
+  const value = String(c.new_value ?? "").trim();
+  if (!value) return { ok: false, detail: "New value missing" };
+  let key = "", name = "", oldValue = "";
+  if (run.data_source === "uploaded") {
+    const { data: rows } = await db().from("uploaded_employees").select("*").ilike("name", c.employee_name.trim()).limit(2);
+    const row = rows?.[0];
+    if (!row) return { ok: false, detail: `Employee "${c.employee_name}" not found in uploaded data` };
+    if (rows!.length > 1) return { ok: false, detail: `More than one employee named "${c.employee_name}"` };
+    let newVal: string | number = value;
+    if (field === "salary") {
+      const n = parseFloat(value.replace(/[^0-9.\-]/g, ""));
+      if (!Number.isFinite(n) || n <= 0) return { ok: false, detail: `Salary "${value}" is not a valid amount` };
+      newVal = n;
+    }
+    key = row.id; name = row.name; oldValue = String((row as Record<string, unknown>)[field] ?? "");
+    const { error } = await db().from("uploaded_employees").update({ [field]: newVal }).eq("id", row.id);
+    if (error) return { ok: false, detail: error.message };
+    const { data: back } = await db().from("uploaded_employees").select("*").eq("id", row.id).single();
+    if (String((back as Record<string, unknown> | null)?.[field] ?? "") !== String(newVal)) return { ok: false, detail: "Record did not change after update" };
+  } else {
+    const emp = employees.find((e) => e.name.toLowerCase() === c.employee_name.trim().toLowerCase());
+    if (!emp) return { ok: false, detail: `Employee "${c.employee_name}" not found` };
+    key = emp.id; name = emp.name;
+    const { data: last } = await db().from("employee_changes").select("new_value").eq("data_source", "seeded").eq("employee_key", key).eq("field", field).order("created_at", { ascending: false }).limit(1);
+    oldValue = last?.[0]?.new_value ?? String((emp as Record<string, unknown>)[field === "risk_flag" ? "riskFlag" : field] ?? "");
+  }
+  const { data: rec, error } = await db().from("employee_changes").insert({
+    data_source: run.data_source, employee_key: key, employee_name: name, field, old_value: oldValue, new_value: value,
+    reason: c.reason ?? "", run_id: run.id, approval_id: approval.id, approved_by: approval.approver_role,
+  }).select("id").single();
+  if (error || !rec) return { ok: false, detail: error?.message ?? "Change history not saved" };
+  return { ok: true, detail: `${name}: ${field} ${oldValue || "—"} → ${value} (record ${rec.id.slice(0, 8)}, approved by ${approval.approver_role})`, name, field, oldValue, value };
 }
 
 const db = () => publicClient();
