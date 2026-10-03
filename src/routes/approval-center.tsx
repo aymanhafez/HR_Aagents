@@ -8,6 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { approvals } from "@/data/workspace";
+import { agentById } from "@/data/agents";
+import { useAgentRealtime, usePendingAgentApprovals } from "@/lib/agents/client";
+import { ApprovalCard } from "@/components/agents/approval-card";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/approval-center")({
   head: () => ({
@@ -50,6 +54,8 @@ function ApprovalCenter() {
           { label: "Auto-executable", value: "12" },
         ]}
       />
+
+      <AgentApprovals />
 
       <div className="space-y-3">
         {approvals.map((a) => {
@@ -105,6 +111,25 @@ function ApprovalCenter() {
         recommend="Approve the redeployment first, then clear anomalies before releasing the run."
         impact="Avoids releasing $702K with known control findings."
       />
+    </div>
+  );
+}
+
+function AgentApprovals() {
+  useAgentRealtime();
+  const { data = [], refetch } = usePendingAgentApprovals();
+  if (data.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      <p className="font-display text-sm font-semibold">From agent runs · {data.length}</p>
+      {data.map((a) => (
+        <div key={a.id} className="space-y-1">
+          <Link to="/agents/$runId" params={{ runId: a.run_id }} className="text-xs text-primary underline">
+            {agentById[a.agent_runs?.agent ?? ""]?.name ?? "Agent"} — {a.agent_runs?.objective}
+          </Link>
+          <ApprovalCard a={a} onDone={refetch} />
+        </div>
+      ))}
     </div>
   );
 }

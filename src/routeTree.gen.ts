@@ -42,6 +42,7 @@ import { Route as SuccessionRouteImport } from './routes/succession'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as WorkflowBuilderRouteImport } from './routes/workflow-builder'
 import { Route as WorkforcePlanningRouteImport } from './routes/workforce-planning'
+import { Route as AgentsRunIdRouteImport } from './routes/agents.$runId'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as EmployeesIndexRouteImport } from './routes/employees.index'
 import { Route as EmployeesEmployeeIdRouteImport } from './routes/employees.$employeeId'
@@ -211,6 +212,11 @@ const WorkforcePlanningRoute = WorkforcePlanningRouteImport.update({
   path: '/workforce-planning',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgentsRunIdRoute = AgentsRunIdRouteImport.update({
+  id: '/agents/$runId',
+  path: '/agents/$runId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -261,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof TasksRoute
   '/workflow-builder': typeof WorkflowBuilderRoute
   '/workforce-planning': typeof WorkforcePlanningRoute
+  '/agents/$runId': typeof AgentsRunIdRoute
   '/api/chat': typeof ApiChatRoute
   '/employees/$employeeId': typeof EmployeesEmployeeIdRoute
   '/employees/': typeof EmployeesIndexRoute
@@ -299,6 +306,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof TasksRoute
   '/workflow-builder': typeof WorkflowBuilderRoute
   '/workforce-planning': typeof WorkforcePlanningRoute
+  '/agents/$runId': typeof AgentsRunIdRoute
   '/api/chat': typeof ApiChatRoute
   '/employees/$employeeId': typeof EmployeesEmployeeIdRoute
   '/employees': typeof EmployeesIndexRoute
@@ -338,6 +346,7 @@ export interface FileRoutesById {
   '/tasks': typeof TasksRoute
   '/workflow-builder': typeof WorkflowBuilderRoute
   '/workforce-planning': typeof WorkforcePlanningRoute
+  '/agents/$runId': typeof AgentsRunIdRoute
   '/api/chat': typeof ApiChatRoute
   '/employees/$employeeId': typeof EmployeesEmployeeIdRoute
   '/employees/': typeof EmployeesIndexRoute
@@ -378,6 +387,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/workflow-builder'
     | '/workforce-planning'
+    | '/agents/$runId'
     | '/api/chat'
     | '/employees/$employeeId'
     | '/employees/'
@@ -416,6 +426,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/workflow-builder'
     | '/workforce-planning'
+    | '/agents/$runId'
     | '/api/chat'
     | '/employees/$employeeId'
     | '/employees'
@@ -454,6 +465,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/workflow-builder'
     | '/workforce-planning'
+    | '/agents/$runId'
     | '/api/chat'
     | '/employees/$employeeId'
     | '/employees/'
@@ -493,6 +505,7 @@ export interface RootRouteChildren {
   TasksRoute: typeof TasksRoute
   WorkflowBuilderRoute: typeof WorkflowBuilderRoute
   WorkforcePlanningRoute: typeof WorkforcePlanningRoute
+  AgentsRunIdRoute: typeof AgentsRunIdRoute
   ApiChatRoute: typeof ApiChatRoute
   EmployeesEmployeeIdRoute: typeof EmployeesEmployeeIdRoute
   EmployeesIndexRoute: typeof EmployeesIndexRoute
@@ -731,6 +744,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkforcePlanningRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agents/$runId': {
+      id: '/agents/$runId'
+      path: '/agents/$runId'
+      fullPath: '/agents/$runId'
+      preLoaderRoute: typeof AgentsRunIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -789,6 +809,7 @@ const rootRouteChildren: RootRouteChildren = {
   TasksRoute: TasksRoute,
   WorkflowBuilderRoute: WorkflowBuilderRoute,
   WorkforcePlanningRoute: WorkforcePlanningRoute,
+  AgentsRunIdRoute: AgentsRunIdRoute,
   ApiChatRoute: ApiChatRoute,
   EmployeesEmployeeIdRoute: EmployeesEmployeeIdRoute,
   EmployeesIndexRoute: EmployeesIndexRoute,

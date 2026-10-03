@@ -1,3 +1,4 @@
+import { AgentPanel } from "@/components/agents/agent-panel";
 import { AiInsightCard, DataTable, KpiGrid, PageHeader } from "@/components/page-parts";
 import { Button } from "@/components/ui/button";
 import { moduleBySlug } from "@/data/modules";
@@ -23,6 +24,7 @@ export function ModulePage({ slug }: { slug: string }) {
       />
       <KpiGrid kpis={mod.kpis} />
       <AiInsightCard {...mod.ai} />
+      <AgentPanel slug={slug} />
       <DataTable columns={mod.columns} rows={mod.rows} />
     </div>
   );

@@ -14,6 +14,211 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_approvals: {
+        Row: {
+          alternatives: string
+          approver_role: string
+          created_at: string
+          decided_at: string | null
+          id: string
+          note: string
+          reason: string
+          risk: string
+          run_id: string
+          status: string
+          step_id: string | null
+        }
+        Insert: {
+          alternatives?: string
+          approver_role?: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          note?: string
+          reason?: string
+          risk?: string
+          run_id: string
+          status?: string
+          step_id?: string | null
+        }
+        Update: {
+          alternatives?: string
+          approver_role?: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          note?: string
+          reason?: string
+          risk?: string
+          run_id?: string
+          status?: string
+          step_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_approvals_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_approvals_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "agent_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_events: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          run_id: string
+          step_id: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          run_id: string
+          step_id?: string | null
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          run_id?: string
+          step_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_runs: {
+        Row: {
+          agent: string
+          blocker: string
+          created_at: string
+          data_source: string
+          deadline: string | null
+          id: string
+          objective: string
+          plan_summary: string
+          priority: string
+          progress: number
+          report: Json | null
+          requested_by_role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent: string
+          blocker?: string
+          created_at?: string
+          data_source?: string
+          deadline?: string | null
+          id?: string
+          objective: string
+          plan_summary?: string
+          priority?: string
+          progress?: number
+          report?: Json | null
+          requested_by_role?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent?: string
+          blocker?: string
+          created_at?: string
+          data_source?: string
+          deadline?: string | null
+          id?: string
+          objective?: string
+          plan_summary?: string
+          priority?: string
+          progress?: number
+          report?: Json | null
+          requested_by_role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agent_steps: {
+        Row: {
+          attempts: number
+          created_at: string
+          error: string
+          evidence: string
+          finished_at: string | null
+          id: string
+          idx: number
+          input: Json
+          output: Json | null
+          risk: string
+          run_id: string
+          started_at: string | null
+          status: string
+          title: string
+          tool: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error?: string
+          evidence?: string
+          finished_at?: string | null
+          id?: string
+          idx: number
+          input?: Json
+          output?: Json | null
+          risk?: string
+          run_id: string
+          started_at?: string | null
+          status?: string
+          title: string
+          tool?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error?: string
+          evidence?: string
+          finished_at?: string | null
+          id?: string
+          idx?: number
+          input?: Json
+          output?: Json | null
+          risk?: string
+          run_id?: string
+          started_at?: string | null
+          status?: string
+          title?: string
+          tool?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_steps_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_tasks: {
         Row: {
           assignee_department: string
@@ -25,6 +230,7 @@ export type Database = {
           due_date: string | null
           id: string
           priority: string
+          run_id: string | null
           source_question: string
           status: string
           title: string
@@ -39,6 +245,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           priority?: string
+          run_id?: string | null
           source_question?: string
           status?: string
           title: string
@@ -53,6 +260,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           priority?: string
+          run_id?: string | null
           source_question?: string
           status?: string
           title?: string
