@@ -151,8 +151,9 @@ export function ModuleRecords({ slug, label, openSignal }: { slug: string; label
       ) : (
         <ul className="divide-y divide-border">
           {recs.data!.map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center gap-2 py-2 text-sm">
+            <li key={r.id} className={`flex flex-wrap items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors duration-1000 ${fresh.has(r.id) ? "bg-primary/15 ring-1 ring-primary" : ""}`}>
               <span className="font-medium">{r.title}</span>
+              {fresh.has(r.id) && <Badge className="text-[10px]">New — agent result</Badge>}
               {r.employee_name && <span className="text-xs text-muted-foreground">· {r.employee_name}</span>}
               {r.amount != null && <span className="text-xs tabular-nums text-muted-foreground">· {r.amount.toLocaleString()}</span>}
               <Badge variant="outline" className="text-[10px]">{r.status}</Badge>
