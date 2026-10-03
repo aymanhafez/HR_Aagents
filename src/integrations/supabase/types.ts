@@ -267,6 +267,66 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_changes: {
+        Row: {
+          approval_id: string | null
+          approved_by: string
+          created_at: string
+          data_source: string
+          employee_key: string
+          employee_name: string
+          field: string
+          id: string
+          new_value: string
+          old_value: string
+          reason: string
+          run_id: string | null
+        }
+        Insert: {
+          approval_id?: string | null
+          approved_by?: string
+          created_at?: string
+          data_source?: string
+          employee_key: string
+          employee_name: string
+          field: string
+          id?: string
+          new_value: string
+          old_value?: string
+          reason?: string
+          run_id?: string | null
+        }
+        Update: {
+          approval_id?: string | null
+          approved_by?: string
+          created_at?: string
+          data_source?: string
+          employee_key?: string
+          employee_name?: string
+          field?: string
+          id?: string
+          new_value?: string
+          old_value?: string
+          reason?: string
+          run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_changes_approval_id_fkey"
+            columns: ["approval_id"]
+            isOneToOne: false
+            referencedRelation: "agent_approvals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_changes_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       uploaded_employees: {
         Row: {
           created_at: string
