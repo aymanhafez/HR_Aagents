@@ -140,10 +140,10 @@ export async function advanceRun(runId: string) {
   const previous = all.filter((s) => s.status === "done").map((s) => `Step ${s.idx} ${s.title}: ${s.output?.result ?? ""}`).join("\n");
   try {
     const data = await dataFor(run.data_source);
-    const out = await aiJson<{ ok: boolean; result: string; evidence: string; blocker?: string; task?: { title: string; description: string; assignee_name: string; assignee_department: string; priority: string; due_date: string } }>(
-      `You are ${agent.name} in the Nayera HR ERP (${agent.focus}). Execute ONE step using only the company data. Return ONLY JSON:
-{"ok": boolean, "result": string (markdown, concise, with figures), "evidence": string (which data you used), "blocker": string (only if ok=false: what is missing and who must provide it)${step.tool === "create_task" ? `, "task": {"title","description","assignee_name" (exact existing employee),"assignee_department","priority" (Low|Medium|High|Critical),"due_date" (YYYY-MM-DD, today ${new Date().toISOString().slice(0, 10)})}` : ""}}
-Do the best possible work with the data available: use the figures you have, state assumptions and list missing data inside result, and set ok=true. Set ok=false ONLY when the step genuinely cannot be performed at all. Never invent employees or figures. Never claim an external action (email, posting) happened.
+    const out = await aiJson<{ ok: boolean; result: string; evidence: string; required_data?: string[]; data_used?: { source: string; detail: string }[]; missing_data?: string[]; blocker?: string; task?: { title: string; description: string; assignee_name: string; assignee_department: string; priority: string; due_date: string } }>(
+      `You are ${agent.name} in the Nayera HR ERP (${agent.focus}). Execute ONE step using only the company data. First decide which data the step REQUIRES, then find it in the company data. Return ONLY JSON:
+{"ok": boolean, "result": string (markdown, concise, with figures), "required_data": string[] (data fields/records this step needs), "data_used": [{"source": string (e.g. "Employee e-1042 Ahmed Sabry", "Payroll KPI", "Uploaded employees: Support dept"), "detail": string (the exact figure/value taken)}], "missing_data": string[] (required items not found), "evidence": string (one-line summary of the proof), "blocker": string (only if ok=false: what is missing and who must provide it)${step.tool === "create_task" ? `, "task": {"title","description","assignee_name" (exact existing employee),"assignee_department","priority" (Low|Medium|High|Critical),"due_date" (YYYY-MM-DD, today ${new Date().toISOString().slice(0, 10)})}` : ""}}
+Every figure in result must appear in data_used. Do the best possible work with the data available: state assumptions and list missing data, and set ok=true. Set ok=false ONLY when the step genuinely cannot be performed at all. Never invent employees or figures. Never claim an external action (email, posting) happened.
 
 COMPANY DATA
 ${data}`,
@@ -151,30 +151,46 @@ ${data}`,
     );
 
     let result = typeof out.result === "string" ? out.result : "";
+    const required = Array.isArray(out.required_data) ? out.required_data.filter((x) => typeof x === "string") : [];
+    const used = Array.isArray(out.data_used) ? out.data_used.filter((d) => d && typeof d.source === "string" && d.source.trim()) : [];
+    const missing = Array.isArray(out.missing_data) ? out.missing_data.filter((x) => typeof x === "string" && x.trim()) : [];
+    const checks: { check: string; passed: boolean; detail: string }[] = [];
     // Partial progress with documented gaps still counts; block only when nothing usable came back.
     let valid = result.trim().length > 80 || (out.ok && result.trim().length > 10);
+    checks.push({ check: "Result produced", passed: valid, detail: valid ? `${result.trim().length} characters` : "Empty or too short" });
+    const hasEvidence = used.length > 0;
+    checks.push({ check: "Evidence from company data", passed: hasEvidence, detail: hasEvidence ? `${used.length} data point(s) cited` : "No data cited" });
+    if (!hasEvidence) valid = false;
+    if (missing.length) result += `\n\n**Missing data:** ${missing.join("; ")}`;
     if (valid && !out.ok && out.blocker) result += `\n\n**Data gaps:** ${out.blocker}`;
+    let confirmation = "";
     if (valid && step.tool === "create_task") {
       const t = out.task;
-      if (!t?.assignee_name || !t.title) valid = false;
+      if (!t?.assignee_name || !t.title) { valid = false; checks.push({ check: "Task details complete", passed: false, detail: "Title or assignee missing" }); }
       else {
-        const { error } = await db().from("chat_tasks").insert({
+        const { data: inserted, error } = await db().from("chat_tasks").insert({
           title: t.title, description: t.description ?? "", assignee_name: t.assignee_name, assignee_department: t.assignee_department ?? "",
           priority: ["Low", "Medium", "High", "Critical"].includes(t.priority) ? t.priority : "Medium",
           due_date: /^\d{4}-\d{2}-\d{2}$/.test(t.due_date ?? "") ? t.due_date : null,
           source_question: `Agent run: ${run.objective}`.slice(0, 500), created_by_role: run.requested_by_role, data_source: run.data_source, run_id: runId,
-        });
-        if (error) valid = false; else result += `\n\nTask created for **${t.assignee_name}** (${t.priority}, due ${t.due_date}).`;
+        }).select("id").single();
+        // Confirm by reading the task back from the database.
+        const { data: confirmed } = inserted ? await db().from("chat_tasks").select("id, assignee_name, status").eq("id", inserted.id).maybeSingle() : { data: null };
+        const ok = !error && !!confirmed;
+        checks.push({ check: "Task saved and confirmed", passed: ok, detail: ok ? `Task ${confirmed!.id.slice(0, 8)} for ${confirmed!.assignee_name} (${confirmed!.status})` : error?.message ?? "Not found after save" });
+        if (!ok) valid = false;
+        else { confirmation = `Task ${confirmed!.id.slice(0, 8)} confirmed in Tasks`; result += `\n\nTask created for **${t.assignee_name}** (${t.priority}, due ${t.due_date}).`; }
       }
     }
 
     if (valid) {
-      await db().from("agent_steps").update({ status: "done", output: { result }, evidence: out.evidence ?? "", error: "", finished_at: new Date().toISOString() }).eq("id", step.id);
-      await event(runId, "done", `Step ${step.idx} validated: ${step.title}`, step.id);
+      const evidence = out.evidence || used.map((d) => d.source).join("; ");
+      await db().from("agent_steps").update({ status: "done", output: { result, required_data: required, data_used: used, missing_data: missing, checks, confirmation: confirmation || `Verified ${checks.filter((c) => c.passed).length}/${checks.length} checks` }, evidence, error: "", finished_at: new Date().toISOString() }).eq("id", step.id);
+      await event(runId, "done", `Step ${step.idx} confirmed complete (${used.length} evidence item${used.length === 1 ? "" : "s"}): ${step.title}`, step.id);
       await updateProgress(runId);
       return { status: "running" };
     }
-    const reason = out.blocker || "Result failed validation.";
+    const reason = out.blocker || checks.filter((c) => !c.passed).map((c) => `${c.check}: ${c.detail}`).join("; ") || "Result failed validation.";
     if (step.attempts + 1 < 2) {
       await db().from("agent_steps").update({ status: "pending", error: reason }).eq("id", step.id);
       await event(runId, "retry", `Step ${step.idx} failed validation, retrying: ${reason}`, step.id);

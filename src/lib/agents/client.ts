@@ -10,7 +10,7 @@ export type AgentRun = {
 };
 export type AgentStep = {
   id: string; run_id: string; idx: number; title: string; tool: string; risk: string; status: string;
-  input: Record<string, unknown>; output: { result?: string } | null; evidence: string; error: string; attempts: number;
+  input: Record<string, unknown>; output: { result?: string; required_data?: string[]; data_used?: { source: string; detail: string }[]; missing_data?: string[]; checks?: { check: string; passed: boolean; detail: string }[]; confirmation?: string } | null; evidence: string; error: string; attempts: number;
 };
 export type AgentApproval = {
   id: string; run_id: string; step_id: string | null; approver_role: string; reason: string; risk: string;
