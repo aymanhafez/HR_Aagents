@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDataSource } from "@/lib/data-source";
 import { fetchUploadedEmployees } from "@/lib/uploaded-data";
 
-type Rec = { id: string; title: string; employee_name: string; details: string; amount: number | null; status: string; created_by: string; run_id: string | null; created_at: string };
+type Rec = { id: string; module: string; title: string; employee_name: string; details: string; amount: number | null; status: string; created_by: string; run_id: string | null; created_at: string };
 
 export function ModuleRecords({ slug, label, openSignal }: { slug: string; label: string; openSignal: number }) {
   const { source } = useDataSource();
@@ -45,8 +45,17 @@ export function ModuleRecords({ slug, label, openSignal }: { slug: string; label
       return data as Rec[];
     },
   });
+  const [fresh, setFresh] = useState<Set<string>>(new Set());
+  const markFresh = (ids: string[]) => {
+    if (!ids.length) return;
+    setFresh((s) => new Set([...s, ...ids]));
+    setTimeout(() => setFresh((s) => { const n = new Set(s); ids.forEach((i) => n.delete(i)); return n; }), 12000);
+  };
   useEffect(() => {
-    const ch = supabase.channel(`recs-${slug}`).on("postgres_changes", { event: "*", schema: "public", table: "module_records" }, () => recs.refetch()).subscribe();
+    const ch = supabase.channel(`recs-${slug}`).on("postgres_changes", { event: "*", schema: "public", table: "module_records" }, (p) => {
+      if (p.eventType === "INSERT" && (p.new as Rec).module === slug) markFresh([(p.new as Rec).id]);
+      recs.refetch();
+    }).subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
@@ -142,8 +151,9 @@ export function ModuleRecords({ slug, label, openSignal }: { slug: string; label
       ) : (
         <ul className="divide-y divide-border">
           {recs.data!.map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center gap-2 py-2 text-sm">
+            <li key={r.id} className={`flex flex-wrap items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors duration-1000 ${fresh.has(r.id) ? "bg-primary/15 ring-1 ring-primary" : ""}`}>
               <span className="font-medium">{r.title}</span>
+              {fresh.has(r.id) && <Badge className="text-[10px]">New — agent result</Badge>}
               {r.employee_name && <span className="text-xs text-muted-foreground">· {r.employee_name}</span>}
               {r.amount != null && <span className="text-xs tabular-nums text-muted-foreground">· {r.amount.toLocaleString()}</span>}
               <Badge variant="outline" className="text-[10px]">{r.status}</Badge>
