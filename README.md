@@ -1,24 +1,30 @@
-# Remix of Hr domain
+# Nayera AI
 
-Implement exactly the screenshot and nothing else
+Nayera AI is a people-intelligence HR platform that combines workforce data, approvals, operational workflows, and AI agents in one application.
 
-This project was built with [Lovable](https://lovable.dev).
+## Key capabilities
 
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/0b408096-bdd4-4325-8ddd-5e3359a94aa9).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+- Workforce command center and employee records
+- Payroll, leave, attendance, recruitment, performance, and planning modules
+- AI-assisted analysis using sample or uploaded company data
+- Auditable agent runs with evidence, approvals, record updates, and tickets
+- Responsive navigation and feature pages for desktop and mobile
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+You need Node.js and Bun to run the application locally.
 
 ```sh
-git clone <this-repository-url>
+git clone <repository-url>
 cd <repository-name>
-npm i
-npm run dev
+bun install
+bun run dev
 ```
+
+## Built with
+
+- TanStack Start
+- TypeScript
+- React
+- Tailwind CSS
+- PostgreSQL
