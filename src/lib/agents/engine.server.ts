@@ -143,7 +143,7 @@ export async function advanceRun(runId: string) {
     const out = await aiJson<{ ok: boolean; result: string; evidence: string; blocker?: string; task?: { title: string; description: string; assignee_name: string; assignee_department: string; priority: string; due_date: string } }>(
       `You are ${agent.name} in the Nayera HR ERP (${agent.focus}). Execute ONE step using only the company data. Return ONLY JSON:
 {"ok": boolean, "result": string (markdown, concise, with figures), "evidence": string (which data you used), "blocker": string (only if ok=false: what is missing and who must provide it)${step.tool === "create_task" ? `, "task": {"title","description","assignee_name" (exact existing employee),"assignee_department","priority" (Low|Medium|High|Critical),"due_date" (YYYY-MM-DD, today ${new Date().toISOString().slice(0, 10)})}` : ""}}
-Set ok=false rather than inventing data. Never claim an external action (email, posting) happened.
+Do the best possible work with the data available: use the figures you have, state assumptions and list missing data inside result, and set ok=true. Set ok=false ONLY when the step genuinely cannot be performed at all. Never invent employees or figures. Never claim an external action (email, posting) happened.
 
 COMPANY DATA
 ${data}`,

@@ -49,6 +49,7 @@ function RunPage() {
   const advance = useServerFn(advanceAgentRun);
   const control = useServerFn(controlAgentRun);
   const busy = useRef(false);
+  const [tick, setTick] = useState(0);
   const run = data?.run;
 
   // Drive the engine one step at a time while the run is active.
@@ -57,8 +58,8 @@ function RunPage() {
     busy.current = true;
     advance({ data: { runId } })
       .catch((e) => toast.error(e instanceof Error ? e.message : "Step failed"))
-      .finally(() => { busy.current = false; refetch(); });
-  }, [run?.status, run?.updated_at, data?.steps, advance, runId, refetch]);
+      .finally(() => { busy.current = false; refetch().then(() => setTick((t) => t + 1)); });
+  }, [run?.status, tick, advance, runId, refetch]);
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading run…</p>;
   if (!run) return <div className="space-y-2"><p>Run not found.</p><Link to="/ai-agents" className="text-primary underline">Back to agents</Link></div>;
