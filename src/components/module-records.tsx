@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDataSource } from "@/lib/data-source";
 import { fetchUploadedEmployees } from "@/lib/uploaded-data";
 
-type Rec = { id: string; title: string; employee_name: string; details: string; amount: number | null; status: string; created_by: string; run_id: string | null; created_at: string };
+type Rec = { id: string; module: string; title: string; employee_name: string; details: string; amount: number | null; status: string; created_by: string; run_id: string | null; created_at: string };
 
 export function ModuleRecords({ slug, label, openSignal }: { slug: string; label: string; openSignal: number }) {
   const { source } = useDataSource();
