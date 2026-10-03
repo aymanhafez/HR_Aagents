@@ -267,6 +267,59 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_tickets: {
+        Row: {
+          agent: string
+          created_at: string
+          data_source: string
+          id: string
+          number: number
+          objective: string
+          request: string
+          result: string
+          role: string
+          run_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent?: string
+          created_at?: string
+          data_source?: string
+          id?: string
+          number?: number
+          objective?: string
+          request: string
+          result?: string
+          role?: string
+          run_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent?: string
+          created_at?: string
+          data_source?: string
+          id?: string
+          number?: number
+          objective?: string
+          request?: string
+          result?: string
+          role?: string
+          run_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_tickets_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_changes: {
         Row: {
           approval_id: string | null
