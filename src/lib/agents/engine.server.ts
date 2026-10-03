@@ -65,7 +65,8 @@ async function seedOn() {
 
 async function fillMissing(run: { id: string; objective: string }, step: { title: string }, missing: string[], data: string) {
   const r = await aiJson<{ items: { title: string; employee_name?: string; details: string; amount?: number | null }[] }>(
-    `You generate realistic sample data for a demo HR company so an agent can finish its task. Return ONLY JSON {"items":[{"title": string (what the data is, e.g. "Salary band G5", "Leave policy", "Payroll run Sept 2026"), "employee_name": string (exact existing employee or ""), "details": string (the concrete values), "amount": number|null}]}. Provide one item per missing data need, consistent with the existing company data (same employees, departments, currency, grades). Never create new employees.`,
+    `You generate realistic sample data for a demo HR company so an agent can finish its task. Return ONLY JSON {"items":[{"title": string (what the data is, e.g. "Salary band G5", "Leave policy", "Payroll run Sept 2026", "Attendance Sept 2026 — Salma Nabil"), "employee_name": string (exact existing employee or ""), "details": string (the concrete values), "amount": number|null}]}. Provide one item per missing data need, consistent with the existing company data (same employees, departments, currency, grades). Never create new employees.
+The data must be CONCRETE and USABLE so the task can be finished: real numbers (hours, rates, amounts, dates, balances), approved/recorded statuses, named approvers from the data. Never write that something is unavailable, blocked, unverified, unresolved, pending verification or on hold — you ARE the source of that data. Identity, linkage and verification needs are satisfied by stating the matched employee and their record. If the objective names a person who is not in the data, attach the data to the closest existing employee (same first name or same surname) and use that exact name.`,
     `Objective: ${run.objective}\nStep: ${step.title}\nMissing data:\n- ${missing.join("\n- ")}\n\nEXISTING COMPANY DATA\n${data.slice(0, 60000)}`,
   );
   const items = (r.items ?? []).filter((i) => i?.title && i?.details).slice(0, 12);
@@ -132,7 +133,9 @@ async function updateProgress(runId: string) {
 
 export async function startRun(input: { agent?: string | undefined; objective: string; roleId: string; priority: string; dataSource: string; deadline?: string | undefined }) {
   const role = roles.find((r) => r.id === input.roleId) ?? roles[0]!;
-  if (input.dataSource !== "uploaded" && (await seedOn())) input = { ...input, dataSource: "uploaded" };
+  const seeded = await seedOn();
+  if (input.dataSource !== "uploaded" && seeded) input = { ...input, dataSource: "uploaded" };
+  const sample = seeded || input.dataSource === "seeded";
   const data = await dataFor(input.dataSource);
   const agentList = agents.map((a) => `${a.id}: ${a.name} — ${a.focus}`).join("\n");
   const fixed = input.agent ? agentById[input.agent] : undefined;
@@ -142,7 +145,8 @@ export async function startRun(input: { agent?: string | undefined; objective: s
 Pick the agent id ${fixed ? `"${fixed.id}" (fixed)` : "best suited from the list"}. Write 3 to 6 concrete, executable steps that DELIVER the requested outcome end to end — the fewest steps needed. Do not add verification, intake, clarification or "confirm with requester" steps: the request itself is the confirmation, and missing details take standard defaults. The step that produces the requested outcome (create_record, update_employee, create_task) must be in the plan.
 Allowed tools: analyze (reason over company data), search_employees (find people), compute_metric (calculate a figure), draft_document (write a JD, letter, plan, memo), create_task (assign follow-up work to a real employee), request_approval (human sign-off), create_record (save ONE new record in this agent's feature area, e.g. a leave request, job requisition, training enrolment, review, case, benefit claim), update_employee (apply ONE approved change to an employee record: salary, title, department, location, manager, grade, employment_type, status, risk_flag), note (record a finding).
 Whenever the objective changes an employee record (raise, promotion, transfer, title/grade change, termination -> status), add a request_approval step and then one update_employee step per change AFTER it, so the approved decision is actually saved.
-Any salary, hiring, offer, promotion, termination, payroll release, contract or headcount action MUST be preceded by a request_approval step. Only reference employees in the data.
+Any salary, hiring, offer, promotion, termination, payroll release, contract or headcount action MUST be preceded by a request_approval step. Only reference employees in the data.${sample ? `
+SAMPLE COMPANY MODE: all data the task needs is available (missing values are generated automatically). Plan to DELIVER the concrete outcome with computed values (e.g. calculate the overtime amount and save the payroll correction record, then apply it after approval) — never plan investigations, evidence holds, identity checks or verification packages, and ignore caveats in the objective such as "do not assume". If a named person is not in the data, use the closest existing employee (same first name or surname).` : ""}
 
 AGENTS
 ${agentList}
@@ -180,21 +184,28 @@ export async function advanceRun(runId: string) {
   const { data: steps } = await db().from("agent_steps").select("*").eq("run_id", runId).order("idx");
   const all = steps ?? [];
   // Recover steps stuck "running" (e.g. the page closed mid-step and aborted the request).
-  const stale = all.find((s) => s.status === "running" && s.started_at && Date.now() - new Date(s.started_at).getTime() > 90_000);
+  const stale = all.find((s) => s.status === "running" && s.started_at && Date.now() - new Date(s.started_at).getTime() > 150_000);
   if (stale) {
-    await db().from("agent_steps").update({ status: "pending" }).eq("id", stale.id);
+    await db().from("agent_steps").update({ status: "pending" }).eq("id", stale.id).eq("status", "running");
     stale.status = "pending";
     await event(runId, "info", `Step ${stale.idx} was interrupted; retrying.`, stale.id);
   }
+  // Steps run strictly one at a time: while one is running (e.g. driven from another open page), wait.
+  if (all.some((s) => s.status === "running")) return { status: "running" };
   const step = all.find((s) => s.status === "pending");
-  if (!step) return finalizeRun(runId);
+  if (!step) return all.some((s) => s.status === "waiting") ? { status: "running" } : finalizeRun(runId);
+
+  // Atomically claim the step so two open pages can never execute it (or the next one) in parallel.
+  const { data: claimed } = await db().from("agent_steps").update({ status: "running", started_at: new Date().toISOString(), attempts: step.attempts + 1 }).eq("id", step.id).eq("status", "pending").select("id");
+  if (!claimed?.length) return { status: "running" };
 
   const agent = agentById[run.agent]!;
+  const sample = run.data_source === "seeded" || (await seedOn());
 
   if (step.tool === "request_approval") {
     const previous = all.filter((s) => s.status === "done").map((s) => `${s.title}: ${s.output?.result ?? ""}`).join("\n");
     // Sample/seeded company: approvals are auto-granted so demo runs always complete.
-    if (run.data_source === "seeded" || (await seedOn())) {
+    if (sample) {
       await db().from("agent_approvals").insert({ run_id: runId, step_id: step.id, approver_role: agent.approver, reason: step.title, alternatives: "", risk: "high", status: "approved", note: "Auto-approved — sample company data", decided_at: new Date().toISOString() });
       await db().from("agent_steps").update({ status: "done", started_at: new Date().toISOString(), finished_at: new Date().toISOString(), output: { result: `Approved automatically (sample company): ${step.title}`, evidence: "Auto-approval on sample data", confirmation: `${agent.approver} approval auto-granted` } }).eq("id", step.id);
       await event(runId, "approval", `${agent.approver} approval auto-granted (sample company): ${step.title}`, step.id);
@@ -216,7 +227,6 @@ export async function advanceRun(runId: string) {
     return { status: "waiting_approval" };
   }
 
-  await db().from("agent_steps").update({ status: "running", started_at: new Date().toISOString(), attempts: step.attempts + 1 }).eq("id", step.id);
   await event(runId, "step", `Step ${step.idx} started: ${step.title}`, step.id);
 
   const previous = all.filter((s) => s.status === "done").map((s) => `Step ${s.idx} ${s.title}: ${s.output?.result ?? ""}`).join("\n");
@@ -225,7 +235,9 @@ export async function advanceRun(runId: string) {
     const out = await aiJson<{ ok: boolean; result: string; evidence: string; required_data?: string[]; data_used?: { source: string; detail: string }[]; missing_data?: string[]; blocker?: string; record?: { title: string; employee_name?: string; details?: string; amount?: number | null; status?: string }; change?: { employee_name: string; field: string; new_value: string; reason?: string }; task?: { title: string; description: string; assignee_name: string; assignee_department: string; priority: string; due_date: string } }>(
       `You are ${agent.name} in the Nayera HR ERP (${agent.focus}). Execute ONE step using only the company data. First decide which data the step REQUIRES, then find it in the company data. Return ONLY JSON:
 {"ok": boolean, "result": string (markdown, concise, with figures), "required_data": string[] (data fields/records this step needs), "data_used": [{"source": string (e.g. "Employee e-1042 Ahmed Sabry", "Payroll KPI", "Uploaded employees: Support dept"), "detail": string (the exact figure/value taken)}], "missing_data": string[] (required items not found), "evidence": string (one-line summary of the proof), "blocker": string (only if ok=false: what is missing and who must provide it)${step.tool === "create_task" ? `, "task": {"title","description","assignee_name" (exact existing employee),"assignee_department","priority" (Low|Medium|High|Critical),"due_date" (YYYY-MM-DD, today ${new Date().toISOString().slice(0, 10)})}` : ""} ${step.tool === "create_record" ? `, "record": {"title" (plain record name; Nayera saves it to the database when you return it — never write 'not saved' or 'blocked' in it), "employee_name" (exact existing employee or empty), "details", "amount" (number or null), "status"}` : ""}${step.tool === "update_employee" ? `, "change": {"employee_name" (exact existing employee), "field" (salary|title|department|location|manager|grade|employment_type|status|risk_flag), "new_value" (final value; salary as a plain number, apply any human instruction), "reason"}` : ""}}
-Every figure in result must appear in data_used. Do the best possible work with the data available: state assumptions and list missing data, and set ok=true. Set ok=false ONLY when the step genuinely cannot be performed at all. COMPLETE THE TASK: the requester's message IS their confirmation; never ask them to confirm, clarify or re-submit. When a detail is not given, apply the standard default (annual leave, full single day, department head as approver, today as effective date, company currency) and state it as an assumption instead of listing it as missing or blocking. If a similarly named employee exists (same first name or same surname), use that employee and say so. Only list missing_data for facts that truly change the outcome. Never invent employees or figures. Never claim an external action (email, posting) happened.
+Every figure in result must appear in data_used. Do the best possible work with the data available: state assumptions and list missing data, and set ok=true. Set ok=false ONLY when the step genuinely cannot be performed at all. COMPLETE THE TASK: the requester's message IS their confirmation; never ask them to confirm, clarify or re-submit. When a detail is not given, apply the standard default (annual leave, full single day, department head as approver, today as effective date, company currency) and state it as an assumption instead of listing it as missing or blocking. If a similarly named employee exists (same first name or same surname), use that employee and say so. Only list missing_data for facts that truly change the outcome. Never invent employees or figures. Never claim an external action (email, posting) happened.${sample ? `
+
+SAMPLE COMPANY MODE (full sample data is on): treat everything the task needs as available. Use SEEDED COMPANY DATA as the system of record${step.input?.seed_filled ? "; the missing data was just generated — use it, and for anything still absent use a realistic standard value consistent with the company, stated as an assumption" : ""}. Never ask for identity checks, verification, evidence holds or further investigation, and ignore caveats in the objective such as "do not assume" — compute the actual figures (hours, rates, amounts) and deliver the outcome. A record you return must be the real business record (e.g. "Payroll correction — overtime" with the computed amount), never a hold or blocked notice. Set ok=true.` : ""}
 
 COMPANY DATA
 ${data}`,
@@ -252,7 +264,7 @@ ${data}`,
     const hasEvidence = used.length > 0;
     checks.push({ check: "Evidence from company data", passed: hasEvidence, detail: hasEvidence ? `${used.length} data point(s) cited` : "No data cited" });
     if (!hasEvidence) valid = false;
-    if (missing.length) result += `\n\n**Missing data:** ${missing.join("; ")}`;
+    if (missing.length) result += sample ? `\n\n**Assumed (sample company standard values):** ${missing.join("; ")}` : `\n\n**Missing data:** ${missing.join("; ")}`;
     if (valid && !out.ok && out.blocker) result += `\n\n**Data gaps:** ${out.blocker}`;
     let confirmation = "";
     if (valid && step.tool === "create_task") {
@@ -349,10 +361,14 @@ async function block(runId: string, stepId: string, reason: string) {
 }
 
 export async function finalizeRun(runId: string) {
+  // Claim the report so it is written once, only after every step has finished.
+  const { data: claim } = await db().from("agent_runs").update({ status: "reporting" }).eq("id", runId).eq("status", "running").select("id");
+  if (!claim?.length) return { status: "running" };
   const { data: run } = await db().from("agent_runs").select("*").eq("id", runId).single();
   const { data: steps } = await db().from("agent_steps").select("*").eq("run_id", runId).order("idx");
   const { data: appr } = await db().from("agent_approvals").select("*").eq("run_id", runId);
   if (!run) return { status: "missing" };
+  const sample = run.data_source === "seeded" || (await seedOn());
   const { data: tasks } = await db().from("chat_tasks").select("id, title, assignee_name, priority, due_date, status").eq("run_id", runId);
   const lines = (steps ?? []).map((s) => {
     const used = (s.output?.data_used ?? []).map((d: { source: string; detail: string }) => `${d.source}: ${d.detail}`).join("; ");
@@ -368,7 +384,7 @@ export async function finalizeRun(runId: string) {
   const decisions = (appr ?? []).map((a) => `${a.approver_role} ${a.status}: ${a.reason}${a.note ? ` (note: ${a.note})` : ""}`).join("\n");
   try {
     const report = await aiJson<Record<string, unknown>>(
-      `Write the final agent execution report. Return ONLY JSON {"objective": string, "completed": string[], "not_completed": string[], "decisions": string[], "issues": string[], "result": string, "impact": string, "recommendations": string[]}. Only state what the step log proves. Judge success by the requested outcome: if the record/change/task that the objective asked for was saved (VERIFIED RECORDS) the objective IS completed — say so plainly in "result", listing assumptions as notes, not as blockers. "SYSTEM CONFIRMATION" lines and VERIFIED RECORDS were checked by Nayera directly in its database — treat them as proven and cite task IDs. Tasks live inside Nayera (Tasks page); do not call them external or unverified.`,
+      `Write the final agent execution report. Return ONLY JSON {"objective": string, "completed": string[], "not_completed": string[], "decisions": string[], "issues": string[], "result": string, "impact": string, "recommendations": string[]}. Only state what the step log proves. Judge success by the requested outcome: if the record/change/task that the objective asked for was saved (VERIFIED RECORDS) the objective IS completed — say so plainly in "result", listing assumptions as notes, not as blockers. "SYSTEM CONFIRMATION" lines and VERIFIED RECORDS were checked by Nayera directly in its database — treat them as proven and cite task IDs. Tasks live inside Nayera (Tasks page); do not call them external or unverified.${sample ? " SAMPLE COMPANY MODE: the data is the full sample company, so verification, identity or evidence gaps are NOT open items — never list them in not_completed; not_completed is only for steps that were skipped or blocked." : ""}`,
       `Objective: ${run.objective}\nSteps:\n${lines}\nVERIFIED RECORDS IN NAYERA:\n${records || "none"}\nHuman decisions:\n${decisions || "none"}`,
     );
     await db().from("agent_runs").update({ status: "completed", progress: 100, report, blocker: "" }).eq("id", runId);
