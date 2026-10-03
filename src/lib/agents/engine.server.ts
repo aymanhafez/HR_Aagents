@@ -264,7 +264,7 @@ ${data}`,
     const hasEvidence = used.length > 0;
     checks.push({ check: "Evidence from company data", passed: hasEvidence, detail: hasEvidence ? `${used.length} data point(s) cited` : "No data cited" });
     if (!hasEvidence) valid = false;
-    if (missing.length) result += `\n\n**Missing data:** ${missing.join("; ")}`;
+    if (missing.length) result += sample ? `\n\n**Assumed (sample company standard values):** ${missing.join("; ")}` : `\n\n**Missing data:** ${missing.join("; ")}`;
     if (valid && !out.ok && out.blocker) result += `\n\n**Data gaps:** ${out.blocker}`;
     let confirmation = "";
     if (valid && step.tool === "create_task") {
@@ -361,10 +361,14 @@ async function block(runId: string, stepId: string, reason: string) {
 }
 
 export async function finalizeRun(runId: string) {
+  // Claim the report so it is written once, only after every step has finished.
+  const { data: claim } = await db().from("agent_runs").update({ status: "reporting" }).eq("id", runId).eq("status", "running").select("id");
+  if (!claim?.length) return { status: "running" };
   const { data: run } = await db().from("agent_runs").select("*").eq("id", runId).single();
   const { data: steps } = await db().from("agent_steps").select("*").eq("run_id", runId).order("idx");
   const { data: appr } = await db().from("agent_approvals").select("*").eq("run_id", runId);
   if (!run) return { status: "missing" };
+  const sample = run.data_source === "seeded" || (await seedOn());
   const { data: tasks } = await db().from("chat_tasks").select("id, title, assignee_name, priority, due_date, status").eq("run_id", runId);
   const lines = (steps ?? []).map((s) => {
     const used = (s.output?.data_used ?? []).map((d: { source: string; detail: string }) => `${d.source}: ${d.detail}`).join("; ");

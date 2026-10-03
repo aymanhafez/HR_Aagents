@@ -47,5 +47,5 @@ export function agentForModule(slug: string): AgentDef | undefined {
 
 export const RUN_STATUS_LABEL: Record<string, string> = {
   planning: "Planning", running: "Running", waiting_approval: "Waiting for approval", paused: "Paused",
-  blocked: "Blocked", completed: "Completed", failed: "Failed", cancelled: "Cancelled",
+  blocked: "Blocked", completed: "Completed", failed: "Failed", cancelled: "Cancelled", reporting: "Writing result",
 };
