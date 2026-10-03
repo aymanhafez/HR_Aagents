@@ -150,8 +150,10 @@ ${data}`,
       `Objective: ${run.objective}\nTool: ${step.tool}\nStep ${step.idx}: ${step.title}. ${step.input?.detail ?? ""}${step.input?.human_note ? `\nHuman instruction: ${step.input.human_note}` : ""}\nPrevious results:\n${previous || "none"}`,
     );
 
-    let valid = out.ok && typeof out.result === "string" && out.result.trim().length > 10;
-    let result = out.result;
+    let result = typeof out.result === "string" ? out.result : "";
+    // Partial progress with documented gaps still counts; block only when nothing usable came back.
+    let valid = result.trim().length > 80 || (out.ok && result.trim().length > 10);
+    if (valid && !out.ok && out.blocker) result += `\n\n**Data gaps:** ${out.blocker}`;
     if (valid && step.tool === "create_task") {
       const t = out.task;
       if (!t?.assignee_name || !t.title) valid = false;
