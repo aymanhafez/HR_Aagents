@@ -27,6 +27,7 @@ async function aiJson<T>(system: string, prompt: string): Promise<T> {
     model: provider.responses(MODEL),
     system,
     prompt,
+    abortSignal: AbortSignal.timeout(120_000),
     onError: ({ error }) => { streamErr = error; },
     providerOptions: {
       openai: { store: false, forceReasoning: true, reasoningEffort: "low", reasoningSummary: "auto", include: ["reasoning.encrypted_content"] },
