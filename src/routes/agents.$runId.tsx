@@ -169,7 +169,27 @@ function StepRow({ s, onDone }: { s: AgentStep; onDone: () => void }) {
       {(open || s.status === "blocked") && (
         <div className="space-y-1 pl-6 text-sm">
           {s.output?.result && <MessageResponse>{s.output.result}</MessageResponse>}
-          {s.evidence && <p className="text-xs text-muted-foreground">Evidence: {s.evidence}</p>}
+          {Array.isArray(s.output?.required_data) && s.output.required_data.length > 0 && (
+            <p className="text-xs text-muted-foreground"><span className="font-semibold text-foreground">Required data:</span> {s.output.required_data.join(", ")}</p>
+          )}
+          {Array.isArray(s.output?.data_used) && s.output.data_used.length > 0 ? (
+            <div className="rounded-md border bg-muted/40 p-2 text-xs">
+              <p className="mb-1 font-semibold">Evidence</p>
+              <ul className="space-y-0.5">
+                {s.output.data_used.map((d: { source: string; detail: string }, i: number) => (
+                  <li key={i}><span className="font-medium">{d.source}</span>{d.detail ? ` — ${d.detail}` : ""}</li>
+                ))}
+              </ul>
+            </div>
+          ) : s.evidence ? <p className="text-xs text-muted-foreground">Evidence: {s.evidence}</p> : null}
+          {Array.isArray(s.output?.checks) && s.output.checks.length > 0 && (
+            <ul className="space-y-0.5 text-xs">
+              {s.output.checks.map((c: { check: string; passed: boolean; detail: string }, i: number) => (
+                <li key={i} className={c.passed ? "text-success" : "text-destructive"}>{c.passed ? "✓" : "✗"} {c.check} — {c.detail}</li>
+              ))}
+            </ul>
+          )}
+          {s.output?.confirmation && <p className="text-xs font-semibold text-success">Confirmed: {s.output.confirmation}</p>}
           {s.error && <p className="text-xs text-destructive">{s.error}</p>}
           {!s.output?.result && !s.error && <p className="text-xs text-muted-foreground">Not run yet.</p>}
         </div>
