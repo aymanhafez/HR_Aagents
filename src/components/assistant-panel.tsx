@@ -103,7 +103,8 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
                       const p = part as unknown as { state: "input-streaming" | "input-available" | "output-available" | "output-error"; input?: { objective?: string }; output?: { ok: boolean; run_id?: string; objective?: string; error?: string }; errorText?: string };
                       const o = p.output;
                       return (
-                        <Tool key={i} defaultOpen={false}>
+                        <div key={i} className="space-y-2">
+                        <Tool defaultOpen={false}>
                           <ToolHeader type="tool-start_agent_run" state={p.state} title={o?.ok ? "Agent action started" : "Starting agent action…"} />
                           <ToolContent>
                             <div className="space-y-1.5 p-3 text-xs">
@@ -114,6 +115,10 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
                             </div>
                           </ToolContent>
                         </Tool>
+                        {o?.ok && o.run_id && (
+                          <Button asChild size="sm" className="w-full text-xs"><Link to="/agents/$runId" params={{ runId: o.run_id }}>Open agent run</Link></Button>
+                        )}
+                        </div>
                       );
                     }
                     if (part.type === "tool-create_task") {
