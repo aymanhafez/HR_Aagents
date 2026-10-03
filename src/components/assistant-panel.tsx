@@ -21,6 +21,7 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Tool, ToolContent, ToolHeader } from "@/components/ai-elements/tool";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { ChatAgentRun } from "@/components/agents/chat-agent-run";
 import type { Role } from "@/data/workspace";
 
 const SUGGESTIONS = [
@@ -115,9 +116,7 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
                             </div>
                           </ToolContent>
                         </Tool>
-                        {o?.ok && o.run_id && (
-                          <Button asChild size="sm" className="w-full text-xs"><Link to="/agents/$runId" params={{ runId: o.run_id }}>Open agent run</Link></Button>
-                        )}
+                        {o?.ok && o.run_id && <ChatAgentRun runId={o.run_id} />}
                         </div>
                       );
                     }
@@ -175,7 +174,7 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about cost, capacity, risk or a specific employee"
+            placeholder="Ask a question or tell Nayera what to get done"
             autoFocus
           />
           <PromptInputFooter className="justify-end">
