@@ -106,7 +106,7 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
                       return (
                         <div key={i} className="space-y-2">
                         <Tool defaultOpen={false}>
-                          <ToolHeader type="tool-start_agent_run" state={p.state} title={o?.ok ? `Ticket ${o.ticket ? `#${o.ticket} ` : ""}opened · agent started` : "Starting agent action…"} />
+                          <ToolHeader type="tool-start_agent_run" state={p.state} title={o?.ok ? `Ticket ${o.ticket ? `#${o.ticket}` : "opened"}` : "Starting agent action…"} />
                           <ToolContent>
                             <div className="space-y-1.5 p-3 text-xs">
                               <p className="text-muted-foreground">{o?.objective ?? p.input?.objective ?? ""}</p>

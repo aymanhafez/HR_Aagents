@@ -40,15 +40,30 @@ export function ChatAgentRun({ runId }: { runId: string }) {
   if (!data || !run) return <p className="text-xs text-muted-foreground">Starting agent…</p>;
   const agent = agentById[run.agent];
   const pending = data.approvals.filter((a) => a.status === "pending");
-  const report = run.report as { result?: string; completed?: string[]; not_completed?: string[]; impact?: string } | null;
+  const report = run.report as { headline?: string; result?: string; completed?: string[]; not_completed?: string[]; impact?: string } | null;
+  const done = run.status === "completed";
+  const working = ["running", "reporting", "planning"].includes(run.status);
+  const label = done ? "Done" : run.status === "reporting" ? "Writing result" : run.status === "waiting_approval" ? "Needs approval" : run.status.replace("_", " ");
+  const headline = report?.headline || report?.result?.split(/(?<=\.)\s/)[0] || "Task completed.";
 
   return (
     <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3 text-xs">
       <div className="flex items-center justify-between gap-2">
         <p className="font-display text-sm font-semibold">{agent?.name ?? "Agent"}</p>
-        <Badge variant="outline" className="text-[10px] capitalize">{run.status.replace("_", " ")}</Badge>
+        <Badge variant={done ? "default" : "outline"} className="gap-1 text-[10px] capitalize">
+          {working && <Loader2 className="h-3 w-3 animate-spin" />}{label}
+        </Badge>
       </div>
-      <Progress value={run.progress} className="h-1.5" />
+      {done && (
+        <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/10 p-2.5">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <div className="min-w-0 space-y-0.5">
+            <p className="text-sm font-semibold text-foreground">{headline}</p>
+            {!!report?.not_completed?.length && <p className="text-muted-foreground">Not done: {report.not_completed.join("; ")}</p>}
+          </div>
+        </div>
+      )}
+      {!done && <Progress value={run.progress} className="h-1.5" />}
       <ul className="space-y-1">
         {data.steps.map((s) => (
           <li key={s.id} className="flex items-start gap-2">
@@ -59,12 +74,8 @@ export function ChatAgentRun({ runId }: { runId: string }) {
       </ul>
       {pending.map((a) => <ApprovalCard key={a.id} a={a} onDone={() => refetch()} />)}
       {run.status === "blocked" && run.blocker && <p className="text-destructive">Blocked: {run.blocker}</p>}
-      {run.status === "completed" && report && (
-        <div className="space-y-1 border-t border-border pt-2">
-          <p className="font-semibold">Result</p>
-          {report.result && <MessageResponse>{report.result}</MessageResponse>}
-          {!!report.not_completed?.length && <p className="text-muted-foreground">Not completed: {report.not_completed.join("; ")}</p>}
-        </div>
+      {done && report?.result && report.result !== headline && (
+        <div className="border-t border-border pt-2 text-muted-foreground"><MessageResponse>{report.result}</MessageResponse></div>
       )}
       <Link to="/agents/$runId" params={{ runId }} className="inline-block font-medium text-primary underline">Full run details</Link>
     </div>
