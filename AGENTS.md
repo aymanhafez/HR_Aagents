@@ -8,6 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
 - Agent runs execute step-by-step on the server (one step per `advanceAgentRun` call, driven by the open run page); the agent_* tables are the single source of truth and the UI follows them via realtime. Why: avoids request timeouts and keeps every step auditable.
 - Shared responsive behavior belongs in the app shell and reusable page components, with mobile navigation in a drawer and wide data tables scrolling inside their cards. Why: keeps every module usable without duplicating layout fixes.
 - Agent steps are claimed atomically (pending→running) and a run is finalized only once (running→reporting) so multiple open pages can drive the same run safely. Why: parallel drivers previously ran steps out of order and wrote the report before steps finished.
