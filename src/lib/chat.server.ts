@@ -14,7 +14,7 @@ import {
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1";
 const MODEL = "openai/gpt-6-astra";
 
-function workspaceSnapshot() {
+export function workspaceSnapshot() {
   const moduleLines = modules
     .map(
       (m) =>
@@ -43,7 +43,7 @@ function workspaceSnapshot() {
   return `MODULE SIGNALS\n${moduleLines}\n\nAI RECOMMENDATIONS\n${recLines}\n\nEMPLOYEES\n${empLines}\n\nPENDING APPROVALS\n${apprLines}`;
 }
 
-function publicClient() {
+export function publicClient() {
   const url = process.env["SUPABASE_URL"]!;
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
   const sb = createClient(url, key, {
@@ -60,7 +60,7 @@ function publicClient() {
   return sb;
 }
 
-async function uploadedSnapshot() {
+export async function uploadedSnapshot() {
   const sb = publicClient();
   const { data, error } = await sb.from("uploaded_employees").select("*").limit(3000);
   if (error) throw error;
