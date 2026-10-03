@@ -82,7 +82,7 @@ async function uploadedSnapshot() {
 
 function uploadedPrompt(roleId: string | undefined, context: string | undefined, snap: { count: number; text: string }) {
   const role = roles.find((r) => r.id === roleId) ?? roles[0]!;
-  return `You are Brite AI, the people-intelligence assistant inside an HR ERP platform.
+  return `You are Nayera AI, the people-intelligence assistant inside an HR ERP platform.
 
 You are speaking with a user in the ${role.title} role (focus: ${role.focus}), viewing "${context ?? "/"}".
 
@@ -96,7 +96,7 @@ ${snap.text}`;
 
 function systemPrompt(roleId?: string, context?: string) {
   const role = roles.find((r) => r.id === roleId) ?? roles[0]!;
-  return `You are Brite AI, the people-intelligence assistant inside an HR ERP platform.
+  return `You are Nayera AI, the people-intelligence assistant inside an HR ERP platform.
 
 You are speaking with ${role.name}, whose role is ${role.title}. Their focus: ${role.focus}. They are currently viewing the screen at "${context ?? "/"}".
 

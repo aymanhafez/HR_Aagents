@@ -136,7 +136,7 @@ export function AiInsightCard({
         <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/12 text-primary">
           <Brain className="h-4 w-4" />
         </span>
-        <p className="font-display text-sm font-semibold">Brite AI signal</p>
+        <p className="font-display text-sm font-semibold">Nayera AI signal</p>
         <Badge variant="outline" className="ml-auto border-primary/30 text-[10px] text-primary">
           Needs review
         </Badge>
