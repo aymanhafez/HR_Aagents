@@ -8,3 +8,4 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+- Agent runs execute step-by-step on the server (one step per `advanceAgentRun` call, driven by the open run page); the agent_* tables are the single source of truth and the UI follows them via realtime. Why: avoids request timeouts and keeps every step auditable.

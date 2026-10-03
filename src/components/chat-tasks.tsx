@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -30,6 +31,7 @@ type ChatTask = {
   due_date: string | null;
   status: string;
   source_question: string;
+  run_id?: string | null;
   created_at: string;
 };
 
@@ -168,6 +170,9 @@ export function ChatTasks() {
                 <p className="mt-0.5 text-xs text-muted-foreground">{t.description}</p>
                 {t.source_question && (
                   <p className="mt-1 text-[11px] italic text-muted-foreground">From chat: “{t.source_question}”</p>
+                )}
+                {t.run_id && (
+                  <Link to="/agents/$runId" params={{ runId: t.run_id }} className="mt-1 inline-block text-[11px] font-medium text-primary underline">Open agent run</Link>
                 )}
               </div>
               <div className="shrink-0 text-right text-xs">
