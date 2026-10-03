@@ -7,7 +7,7 @@ import { publicClient, uploadedSnapshot, workspaceSnapshot } from "@/lib/chat.se
 import { createLovableAiGatewayRunIdFetch } from "@/lib/run-id.ts";
 
 const MODEL = "openai/gpt-6-astra";
-const TOOLS = ["analyze", "search_employees", "compute_metric", "draft_document", "create_task", "request_approval", "update_employee", "note"];
+const TOOLS = ["analyze", "search_employees", "compute_metric", "draft_document", "create_task", "request_approval", "update_employee", "create_record", "note"];
 const SENSITIVE = /salary|hire|hiring|offer|promot|terminat|dismiss|payroll release|release payroll|contract|headcount|disciplin/i;
 
 class GatewayStop extends Error {}
@@ -115,7 +115,7 @@ export async function startRun(input: { agent?: string | undefined; objective: s
   const plan = await aiJson<{ agent: string; summary: string; steps: { title: string; tool: string; detail: string }[] }>(
     `You are the Nayera agent planner inside an HR ERP. Return ONLY JSON: {"agent": string, "summary": string, "steps": [{"title": string, "tool": string, "detail": string}]}.
 Pick the agent id ${fixed ? `"${fixed.id}" (fixed)` : "best suited from the list"}. Write 4 to 8 concrete, executable steps that complete the business process end to end.
-Allowed tools: analyze (reason over company data), search_employees (find people), compute_metric (calculate a figure), draft_document (write a JD, letter, plan, memo), create_task (assign follow-up work to a real employee), request_approval (human sign-off), update_employee (apply ONE approved change to an employee record: salary, title, department, location, manager, grade, employment_type, status, risk_flag), note (record a finding).
+Allowed tools: analyze (reason over company data), search_employees (find people), compute_metric (calculate a figure), draft_document (write a JD, letter, plan, memo), create_task (assign follow-up work to a real employee), request_approval (human sign-off), create_record (save ONE new record in this agent's feature area, e.g. a leave request, job requisition, training enrolment, review, case, benefit claim), update_employee (apply ONE approved change to an employee record: salary, title, department, location, manager, grade, employment_type, status, risk_flag), note (record a finding).
 Whenever the objective changes an employee record (raise, promotion, transfer, title/grade change, termination -> status), add a request_approval step and then one update_employee step per change AFTER it, so the approved decision is actually saved.
 Any salary, hiring, offer, promotion, termination, payroll release, contract or headcount action MUST be preceded by a request_approval step. Only reference employees in the data.
 
@@ -139,7 +139,7 @@ ${data}`,
 
   const rows = steps.map((s, i) => {
     const tool = TOOLS.includes(s.tool) ? s.tool : "analyze";
-    const risk = tool === "request_approval" ? "high" : tool === "create_task" || tool === "update_employee" || SENSITIVE.test(s.title) ? "medium" : "low";
+    const risk = tool === "request_approval" ? "high" : tool === "create_task" || tool === "update_employee" || tool === "create_record" || SENSITIVE.test(s.title) ? "medium" : "low";
     return { run_id: run.id, idx: i + 1, title: s.title, tool, risk, input: { detail: s.detail ?? "" } };
   });
   const ins = await db().from("agent_steps").insert(rows);
@@ -182,9 +182,9 @@ export async function advanceRun(runId: string) {
   const previous = all.filter((s) => s.status === "done").map((s) => `Step ${s.idx} ${s.title}: ${s.output?.result ?? ""}`).join("\n");
   try {
     const data = await dataFor(run.data_source);
-    const out = await aiJson<{ ok: boolean; result: string; evidence: string; required_data?: string[]; data_used?: { source: string; detail: string }[]; missing_data?: string[]; blocker?: string; change?: { employee_name: string; field: string; new_value: string; reason?: string }; task?: { title: string; description: string; assignee_name: string; assignee_department: string; priority: string; due_date: string } }>(
+    const out = await aiJson<{ ok: boolean; result: string; evidence: string; required_data?: string[]; data_used?: { source: string; detail: string }[]; missing_data?: string[]; blocker?: string; record?: { title: string; employee_name?: string; details?: string; amount?: number | null; status?: string }; change?: { employee_name: string; field: string; new_value: string; reason?: string }; task?: { title: string; description: string; assignee_name: string; assignee_department: string; priority: string; due_date: string } }>(
       `You are ${agent.name} in the Nayera HR ERP (${agent.focus}). Execute ONE step using only the company data. First decide which data the step REQUIRES, then find it in the company data. Return ONLY JSON:
-{"ok": boolean, "result": string (markdown, concise, with figures), "required_data": string[] (data fields/records this step needs), "data_used": [{"source": string (e.g. "Employee e-1042 Ahmed Sabry", "Payroll KPI", "Uploaded employees: Support dept"), "detail": string (the exact figure/value taken)}], "missing_data": string[] (required items not found), "evidence": string (one-line summary of the proof), "blocker": string (only if ok=false: what is missing and who must provide it)${step.tool === "create_task" ? `, "task": {"title","description","assignee_name" (exact existing employee),"assignee_department","priority" (Low|Medium|High|Critical),"due_date" (YYYY-MM-DD, today ${new Date().toISOString().slice(0, 10)})}` : ""}${step.tool === "update_employee" ? `, "change": {"employee_name" (exact existing employee), "field" (salary|title|department|location|manager|grade|employment_type|status|risk_flag), "new_value" (final value; salary as a plain number, apply any human instruction), "reason"}` : ""}}
+{"ok": boolean, "result": string (markdown, concise, with figures), "required_data": string[] (data fields/records this step needs), "data_used": [{"source": string (e.g. "Employee e-1042 Ahmed Sabry", "Payroll KPI", "Uploaded employees: Support dept"), "detail": string (the exact figure/value taken)}], "missing_data": string[] (required items not found), "evidence": string (one-line summary of the proof), "blocker": string (only if ok=false: what is missing and who must provide it)${step.tool === "create_task" ? `, "task": {"title","description","assignee_name" (exact existing employee),"assignee_department","priority" (Low|Medium|High|Critical),"due_date" (YYYY-MM-DD, today ${new Date().toISOString().slice(0, 10)})}` : ""} ${step.tool === "create_record" ? `, "record": {"title" (plain record name; Nayera saves it to the database when you return it — never write 'not saved' or 'blocked' in it), "employee_name" (exact existing employee or empty), "details", "amount" (number or null), "status"}` : ""}${step.tool === "update_employee" ? `, "change": {"employee_name" (exact existing employee), "field" (salary|title|department|location|manager|grade|employment_type|status|risk_flag), "new_value" (final value; salary as a plain number, apply any human instruction), "reason"}` : ""}}
 Every figure in result must appear in data_used. Do the best possible work with the data available: state assumptions and list missing data, and set ok=true. Set ok=false ONLY when the step genuinely cannot be performed at all. Never invent employees or figures. Never claim an external action (email, posting) happened.
 
 COMPANY DATA
@@ -222,6 +222,21 @@ ${data}`,
         checks.push({ check: "Task saved and confirmed", passed: ok, detail: ok ? `Task ${confirmed!.id.slice(0, 8)} for ${confirmed!.assignee_name} (${confirmed!.status})` : error?.message ?? "Not found after save" });
         if (!ok) valid = false;
         else { confirmation = `Task ${confirmed!.id.slice(0, 8)} confirmed in Tasks`; result += `\n\nTask created for **${t.assignee_name}** (${t.priority}, due ${t.due_date}).`; }
+      }
+    }
+
+    if (valid && step.tool === "create_record") {
+      const r = out.record;
+      if (!r?.title) { valid = false; checks.push({ check: "Record details complete", passed: false, detail: "Title missing" }); }
+      else {
+        const { data: ins, error } = await db().from("module_records").insert({
+          module: agent.module, data_source: run.data_source, title: r.title, employee_name: r.employee_name ?? "", details: r.details ?? "",
+          amount: typeof r.amount === "number" ? r.amount : null, status: r.status || "Open", created_by: agent.name, run_id: runId,
+        }).select("id").single();
+        const { data: back } = ins ? await db().from("module_records").select("id, title").eq("id", ins.id).maybeSingle() : { data: null };
+        const ok = !error && !!back;
+        checks.push({ check: "Record saved and confirmed", passed: ok, detail: ok ? `Record ${back!.id.slice(0, 8)} "${back!.title}"` : error?.message ?? "Not found after save" });
+        if (!ok) valid = false; else { confirmation = `Record ${back!.id.slice(0, 8)} saved in ${agent.module}`; result += `\n\nRecord saved: **${r.title}**.`; }
       }
     }
 
@@ -283,7 +298,9 @@ export async function finalizeRun(runId: string) {
     return `${s.idx}. [${s.status}] ${s.title}: ${s.output?.result ?? s.error ?? ""}${used ? `\n   Evidence: ${used}` : ""}${s.output?.confirmation ? `\n   SYSTEM CONFIRMATION: ${s.output.confirmation}` : ""}`;
   }).join("\n");
   const { data: changes } = await db().from("employee_changes").select("id, employee_name, field, old_value, new_value, approved_by").eq("run_id", runId);
+  const { data: recs } = await db().from("module_records").select("id, module, title, employee_name").eq("run_id", runId);
   const records = [
+    ...(recs ?? []).map((r) => `Record ${r.id.slice(0, 8)} in ${r.module}: "${r.title}"${r.employee_name ? ` for ${r.employee_name}` : ""}`),
     ...(tasks ?? []).map((t) => `Task ${t.id.slice(0, 8)} "${t.title}" assigned to ${t.assignee_name}, ${t.priority}, due ${t.due_date ?? "none"}, status ${t.status}`),
     ...(changes ?? []).map((c) => `Employee record change ${c.id.slice(0, 8)}: ${c.employee_name} ${c.field} ${c.old_value || "—"} -> ${c.new_value} (approved by ${c.approved_by})`),
   ].join("\n");

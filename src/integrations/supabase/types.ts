@@ -327,6 +327,56 @@ export type Database = {
           },
         ]
       }
+      module_records: {
+        Row: {
+          amount: number | null
+          created_at: string
+          created_by: string
+          data_source: string
+          details: string
+          employee_name: string
+          id: string
+          module: string
+          run_id: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          created_by?: string
+          data_source?: string
+          details?: string
+          employee_name?: string
+          id?: string
+          module: string
+          run_id?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          created_by?: string
+          data_source?: string
+          details?: string
+          employee_name?: string
+          id?: string
+          module?: string
+          run_id?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_records_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       uploaded_employees: {
         Row: {
           created_at: string

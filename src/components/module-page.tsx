@@ -2,9 +2,12 @@ import { AgentPanel } from "@/components/agents/agent-panel";
 import { AiInsightCard, DataTable, KpiGrid, PageHeader } from "@/components/page-parts";
 import { Button } from "@/components/ui/button";
 import { moduleBySlug } from "@/data/modules";
+import { ModuleRecords } from "@/components/module-records";
+import { useState } from "react";
 
 export function ModulePage({ slug }: { slug: string }) {
   const mod = moduleBySlug[slug];
+  const [openSignal, setOpenSignal] = useState(0);
   if (!mod) return null;
 
   return (
@@ -18,13 +21,14 @@ export function ModulePage({ slug }: { slug: string }) {
             <Button variant="outline" size="sm">
               Export
             </Button>
-            <Button size="sm">New record</Button>
+            <Button size="sm" onClick={() => setOpenSignal((n) => n + 1)}>New record</Button>
           </div>
         }
       />
       <KpiGrid kpis={mod.kpis} />
       <AiInsightCard {...mod.ai} />
       <AgentPanel slug={slug} />
+      <ModuleRecords slug={slug} label={mod.title} openSignal={openSignal} />
       <DataTable columns={mod.columns} rows={mod.rows} />
     </div>
   );
