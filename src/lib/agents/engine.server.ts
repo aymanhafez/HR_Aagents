@@ -196,6 +196,7 @@ export async function advanceRun(runId: string) {
     await db().from("agent_approvals").insert({ run_id: runId, step_id: step.id, approver_role: agent.approver, reason, alternatives, risk: "high" });
     await db().from("agent_steps").update({ status: "waiting", started_at: new Date().toISOString() }).eq("id", step.id);
     await db().from("agent_runs").update({ status: "waiting_approval" }).eq("id", runId);
+    await syncTicket(runId, "Waiting approval", `Waiting for ${agent.approver} approval: ${step.title}`);
     await event(runId, "approval", `Waiting for ${agent.approver} approval: ${step.title}`, step.id);
     return { status: "waiting_approval" };
   }
