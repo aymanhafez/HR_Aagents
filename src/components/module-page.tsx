@@ -17,7 +17,7 @@ export function ModulePage({ slug }: { slug: string }) {
         title={mod.title}
         subtitle={mod.subtitle}
         actions={
-          <div className="flex gap-2">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
             <Button variant="outline" size="sm">
               Export
             </Button>

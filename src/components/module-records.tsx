@@ -82,9 +82,9 @@ export function ModuleRecords({ slug, label, openSignal }: { slug: string; label
 
   return (
     <Card className="gap-4 p-4 shadow-[var(--shadow-card)]">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="font-display text-sm font-semibold">{label} records</p>
-        <Button size="sm" variant={open ? "outline" : "default"} className="ml-auto gap-1.5" onClick={() => setOpen((o) => !o)}>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+          <p className="min-w-0 truncate font-display text-sm font-semibold">{label} records</p>
+          <Button size="sm" variant={open ? "outline" : "default"} className="gap-1.5" onClick={() => setOpen((o) => !o)}>
           <Plus className="h-3.5 w-3.5" />{open ? "Close" : "Add manually"}
         </Button>
       </div>
@@ -100,7 +100,7 @@ export function ModuleRecords({ slug, label, openSignal }: { slug: string; label
       )}
 
       {open && (
-        <div className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-2">
+        <div className="grid gap-2 rounded-md border border-border p-3 md:grid-cols-2">
           <Field label={`${form.titleLabel} *`}>
             {form.titleOptions ? (
               <Select value={f.title} onValueChange={(v) => setF({ ...f, title: v })}>
@@ -142,7 +142,7 @@ export function ModuleRecords({ slug, label, openSignal }: { slug: string; label
               <SelectContent>{form.statuses.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
-          <Button className="sm:col-span-2" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save record"}</Button>
+          <Button className="md:col-span-2" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save record"}</Button>
         </div>
       )}
 
@@ -151,13 +151,13 @@ export function ModuleRecords({ slug, label, openSignal }: { slug: string; label
       ) : (
         <ul className="divide-y divide-border">
           {recs.data!.map((r) => (
-            <li key={r.id} className={`flex flex-wrap items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors duration-1000 ${fresh.has(r.id) ? "bg-primary/15 ring-1 ring-primary" : ""}`}>
-              <span className="font-medium">{r.title}</span>
+            <li key={r.id} className={`grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1 rounded-md px-2 py-2 text-sm transition-colors duration-1000 sm:flex sm:flex-wrap sm:items-center ${fresh.has(r.id) ? "bg-primary/15 ring-1 ring-primary" : ""}`}>
+              <span className="min-w-0 wrap-break-word font-medium">{r.title}</span>
               {fresh.has(r.id) && <Badge className="text-[10px]">New — agent result</Badge>}
               {r.employee_name && <span className="text-xs text-muted-foreground">· {r.employee_name}</span>}
               {r.amount != null && <span className="text-xs tabular-nums text-muted-foreground">· {r.amount.toLocaleString()}</span>}
               <Badge variant="outline" className="text-[10px]">{r.status}</Badge>
-              <span className="ml-auto text-xs text-muted-foreground">
+              <span className="col-span-2 text-xs text-muted-foreground sm:ml-auto">
                 {r.created_by === "manual" ? "Added manually" : r.run_id ? <Link to="/agents/$runId" params={{ runId: r.run_id }} className="underline">By {r.created_by}</Link> : `By ${r.created_by}`}
               </span>
               {r.details && <p className="w-full text-xs text-muted-foreground">{r.details}</p>}
@@ -170,5 +170,5 @@ export function ModuleRecords({ slug, label, openSignal }: { slug: string; label
 }
 
 function Field({ label, wide, children }: { label: string; wide?: boolean; children: React.ReactNode }) {
-  return <label className={`space-y-1 text-xs text-muted-foreground ${wide ? "sm:col-span-2" : ""}`}><span>{label}</span>{children}</label>;
+  return <label className={`min-w-0 space-y-1 text-xs text-muted-foreground ${wide ? "md:col-span-2" : ""}`}><span>{label}</span>{children}</label>;
 }

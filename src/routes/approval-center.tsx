@@ -91,7 +91,7 @@ function ApprovalCenter() {
                   {outcome}
                 </Badge>
               ) : (
-                <div className="flex gap-2">
+                <div className="flex w-full gap-2 sm:w-auto sm:shrink-0">
                   <Button size="sm" onClick={() => decide(a.id, "Approved")}>
                     <CheckCircle2 className="h-4 w-4" /> Approve
                   </Button>

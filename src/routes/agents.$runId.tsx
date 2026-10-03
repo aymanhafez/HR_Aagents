@@ -77,7 +77,7 @@ function RunPage() {
         title={run.objective}
         subtitle={`Requested by ${role ? `${role.name} (${role.title})` : run.requested_by_role} · ${run.priority} priority · ${run.data_source === "uploaded" ? "your uploaded data" : "sample company"}`}
         actions={
-          <div className="flex gap-2">
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             {run.status === "running" && <Button size="sm" variant="outline" className="gap-1" onClick={() => act("pause")}><Pause className="h-3.5 w-3.5" />Pause</Button>}
             {["paused", "blocked"].includes(run.status) && <Button size="sm" className="gap-1" onClick={() => act("resume")}><Play className="h-3.5 w-3.5" />Resume</Button>}
             {!["completed", "cancelled"].includes(run.status) && <Button size="sm" variant="outline" className="gap-1" onClick={() => act("cancel")}><XCircle className="h-3.5 w-3.5" />Cancel</Button>}
@@ -147,16 +147,16 @@ function StepRow({ s, onDone }: { s: AgentStep; onDone: () => void }) {
   const go = async (action: "skip" | "retry" | "edit") => { await edit({ data: { stepId: s.id, action, title } }); setEditing(false); onDone(); };
   return (
     <Card className="gap-2 p-3">
-      <div className="flex items-center gap-2">
-        <StepIcon s={s.status} />
+      <div className="grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-2 sm:flex">
+        <span className="shrink-0"><StepIcon s={s.status} /></span>
         <span className="text-xs text-muted-foreground">{String(s.idx).padStart(2, "0")}</span>
         {editing ? (
           <Input value={title} onChange={(e) => setTitle(e.target.value)} className="h-7 flex-1 text-sm" />
         ) : (
-          <button className="flex-1 text-left text-sm font-medium" onClick={() => setOpen((o) => !o)}>{s.title}</button>
+          <button className="min-w-0 wrap-break-word text-left text-sm font-medium sm:flex-1" onClick={() => setOpen((o) => !o)}>{s.title}</button>
         )}
-        <Badge variant="outline" className="text-[10px]">{s.tool}</Badge>
-        {s.risk !== "low" && <Badge variant={s.risk === "high" ? "destructive" : "secondary"} className="text-[10px]">{s.risk} risk</Badge>}
+        <Badge variant="outline" className="col-start-3 w-fit text-[10px] sm:col-auto">{s.tool}</Badge>
+        {s.risk !== "low" && <Badge variant={s.risk === "high" ? "destructive" : "secondary"} className="col-start-3 w-fit text-[10px] sm:col-auto">{s.risk} risk</Badge>}
         {s.status === "pending" && !editing && (
           <>
             <Button size="icon-sm" variant="ghost" aria-label="Edit step" onClick={() => setEditing(true)}><Pencil className="h-3.5 w-3.5" /></Button>

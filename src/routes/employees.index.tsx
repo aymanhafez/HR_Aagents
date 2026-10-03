@@ -55,13 +55,13 @@ function EmployeesPage() {
 
       <Card className="overflow-hidden p-0 shadow-[var(--shadow-card)]">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="min-w-max w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/50 text-left">
                 {["Employee", "Department", "Grade", "Manager", "Utilization", "Goals", "AI flag", ""].map((c) => (
                   <th
                     key={c}
-                    className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                    className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground ${c === "Employee" ? "sticky left-0 z-20 border-r border-border bg-muted" : ""}`}
                   >
                     {c}
                   </th>
@@ -71,7 +71,7 @@ function EmployeesPage() {
             <tbody>
               {employees.map((e) => (
                 <tr key={e.id} className="border-b border-border/70 last:border-0 hover:bg-muted/40">
-                  <td className="px-4 py-3">
+                  <td className="sticky left-0 z-10 border-r border-border bg-card px-4 py-3">
                     <p className="font-medium text-foreground">{e.name}</p>
                     <p className="text-xs text-muted-foreground">{e.title}</p>
                   </td>
@@ -132,11 +132,11 @@ function UploadedEmployees({ rows, loading }: { rows: UploadedEmployee[] | undef
       />
       <Card className="overflow-hidden p-0 shadow-[var(--shadow-card)]">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="min-w-max w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/50 text-left">
                 {["Employee", "Department", "Location", "Grade", "Manager", "Utilization", "Goals", "Flag"].map((c) => (
-                  <th key={c} className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{c}</th>
+                   <th key={c} className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground ${c === "Employee" ? "sticky left-0 z-20 border-r border-border bg-muted" : ""}`}>{c}</th>
                 ))}
               </tr>
             </thead>
@@ -146,7 +146,7 @@ function UploadedEmployees({ rows, loading }: { rows: UploadedEmployee[] | undef
               )}
               {list.map((e) => (
                 <tr key={e.id} className="border-b border-border/70 last:border-0 hover:bg-muted/40">
-                  <td className="px-4 py-3"><p className="font-medium">{e.name}</p><p className="text-xs text-muted-foreground">{e.title}</p></td>
+                   <td className="sticky left-0 z-10 border-r border-border bg-card px-4 py-3"><p className="font-medium">{e.name}</p><p className="text-xs text-muted-foreground">{e.title}</p></td>
                   <td className="px-4 py-3 text-muted-foreground">{e.department}</td>
                   <td className="px-4 py-3 text-muted-foreground">{e.location}</td>
                   <td className="px-4 py-3 text-muted-foreground">{e.grade}</td>

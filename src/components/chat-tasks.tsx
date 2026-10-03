@@ -104,8 +104,8 @@ export function ChatTasks() {
 
   return (
     <Card className="overflow-hidden p-0 shadow-[var(--shadow-card)]">
-      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-        <div>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-4 py-3">
+        <div className="min-w-0">
           <p className="font-display text-sm font-semibold">Tasks created from Nayera AI chats</p>
           <p className="text-xs text-muted-foreground">Ask Nayera AI to create a task, or add one yourself.</p>
         </div>
@@ -164,7 +164,7 @@ export function ChatTasks() {
       ) : (
         <ul>
           {data.map((t) => (
-            <li key={t.id} className="flex items-start gap-4 border-b border-border/70 px-4 py-3 last:border-0">
+            <li key={t.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border/70 px-4 py-3 last:border-0 sm:flex sm:gap-4">
               <div className="min-w-0 flex-1">
                 <p className={`font-medium ${t.status === "Done" ? "text-muted-foreground line-through" : ""}`}>{t.title}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">{t.description}</p>
@@ -180,8 +180,8 @@ export function ChatTasks() {
                 <p className="text-muted-foreground">{t.assignee_department}</p>
                 <p className="mt-1 text-muted-foreground">Due {t.due_date ?? "—"}</p>
               </div>
-              <Badge variant="outline" className="shrink-0 border-primary/30 text-[11px] text-primary">{t.priority}</Badge>
-              <Button size="sm" variant={t.status === "Done" ? "outline" : "default"} onClick={() => toggle(t)}>
+              <Badge variant="outline" className="col-start-2 row-start-2 ml-auto shrink-0 border-primary/30 text-[11px] text-primary sm:col-auto sm:row-auto sm:ml-0">{t.priority}</Badge>
+              <Button size="sm" className="col-span-2 w-full sm:col-auto sm:w-auto" variant={t.status === "Done" ? "outline" : "default"} onClick={() => toggle(t)}>
                 {t.status === "Done" ? "Reopen" : "Mark done"}
               </Button>
             </li>

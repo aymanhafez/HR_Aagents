@@ -37,8 +37,8 @@ export function ChatTickets() {
             <li key={t.id} className="space-y-1 py-3 text-sm">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-xs text-muted-foreground">#{t.number}</span>
-                <span className="font-medium">{t.request}</span>
-                <Badge variant={variant(t.status)} className="ml-auto">{t.status}</Badge>
+                <span className="min-w-0 flex-1 wrap-break-word font-medium">{t.request}</span>
+                <Badge variant={variant(t.status)} className="shrink-0">{t.status}</Badge>
               </div>
               <p className="text-xs text-muted-foreground">
                 {t.agent || "Agent"} · opened {new Date(t.created_at).toLocaleString()} · updated {new Date(t.updated_at).toLocaleString()}
