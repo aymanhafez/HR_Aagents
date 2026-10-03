@@ -21,7 +21,7 @@ export type AgentEvent = { id: string; run_id: string; type: string; message: st
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const sb = supabase as any;
 
-export function useAgentRuns(filter?: { agent?: string }) {
+export function useAgentRuns(filter?: { agent?: string | undefined }) {
   return useQuery({
     queryKey: ["agent-runs", filter?.agent ?? "all"],
     queryFn: async () => {

@@ -65,7 +65,7 @@ async function updateProgress(runId: string) {
   await db().from("agent_runs").update({ progress }).eq("id", runId);
 }
 
-export async function startRun(input: { agent?: string; objective: string; roleId: string; priority: string; dataSource: string; deadline?: string }) {
+export async function startRun(input: { agent?: string | undefined; objective: string; roleId: string; priority: string; dataSource: string; deadline?: string | undefined }) {
   const role = roles.find((r) => r.id === input.roleId) ?? roles[0]!;
   const data = await dataFor(input.dataSource);
   const agentList = agents.map((a) => `${a.id}: ${a.name} — ${a.focus}`).join("\n");

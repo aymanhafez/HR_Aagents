@@ -35,7 +35,7 @@ function OpsCenter() {
       <KpiGrid kpis={[
         { label: "Active runs", value: String(count("running") + count("planning")) },
         { label: "Waiting approval", value: String(count("waiting_approval")) },
-        { label: "Blocked", value: String(count("blocked")), tone: count("blocked") ? "down" : undefined },
+        { label: "Blocked", value: String(count("blocked")), tone: count("blocked") ? "down" : "flat" },
         { label: "Success rate", value: `${success}%` },
       ]} />
       <StartAgentForm />
