@@ -25,7 +25,10 @@ export function ModuleRecords({ slug, label, openSignal }: { slug: string; label
   const { run, pending } = useStartRun();
   const [open, setOpen] = useState(false);
   const [ask, setAsk] = useState("");
-  const [f, setF] = useState({ title: "", employee: "", details: "", amount: "", status: "Open" });
+  const form = formFor(slug);
+  const blank = { title: "", employee: "", amount: "", status: form.statuses[0]! };
+  const [f, setF] = useState(blank);
+  const [extra, setExtra] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { if (openSignal) setOpen(true); }, [openSignal]);
@@ -48,17 +51,21 @@ export function ModuleRecords({ slug, label, openSignal }: { slug: string; label
   }, [slug]);
 
   const save = async () => {
-    if (!f.title.trim()) { toast.error("Add a title first."); return; }
+    if (!f.title.trim()) { toast.error(`Add ${form.titleLabel.toLowerCase()} first.`); return; }
+    const miss = form.fields.find((fd) => fd.required && !extra[fd.key]?.trim());
+    if (miss) { toast.error(`${miss.label} is required.`); return; }
+    if (extra.start && extra.end && extra.end < extra.start) { toast.error("End date must be after start date."); return; }
     setSaving(true);
     const amount = parseFloat(f.amount);
+    const details = form.fields.filter((fd) => extra[fd.key]?.trim()).map((fd) => `${fd.label}: ${extra[fd.key]!.trim().slice(0, 1000)}`).join(" · ");
     const { error } = await supabase.from("module_records").insert({
-      module: slug, data_source: source, title: f.title.trim(), employee_name: f.employee, details: f.details,
+      module: slug, data_source: source, title: f.title.trim().slice(0, 200), employee_name: f.employee, details,
       amount: Number.isFinite(amount) ? amount : null, status: f.status, created_by: "manual",
     });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Record added");
-    setF({ title: "", employee: "", details: "", amount: "", status: "Open" });
+    setF(blank); setExtra({});
     setOpen(false);
     recs.refetch();
   };
@@ -84,17 +91,47 @@ export function ModuleRecords({ slug, label, openSignal }: { slug: string; label
 
       {open && (
         <div className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-2">
-          <Input placeholder="Title (required)" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
-          <Select value={f.employee} onValueChange={(v) => setF({ ...f, employee: v })}>
-            <SelectTrigger><SelectValue placeholder="Employee (optional)" /></SelectTrigger>
-            <SelectContent>{names.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
-          </Select>
-          <Input placeholder="Amount (optional)" inputMode="decimal" value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} />
-          <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{["Open", "In progress", "Pending approval", "Approved", "Done"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-          </Select>
-          <Textarea className="sm:col-span-2" rows={2} placeholder="Details" value={f.details} onChange={(e) => setF({ ...f, details: e.target.value })} />
+          <Field label={`${form.titleLabel} *`}>
+            {form.titleOptions ? (
+              <Select value={f.title} onValueChange={(v) => setF({ ...f, title: v })}>
+                <SelectTrigger><SelectValue placeholder="Choose…" /></SelectTrigger>
+                <SelectContent>{form.titleOptions.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+              </Select>
+            ) : <Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />}
+          </Field>
+          {form.employee && (
+            <Field label={form.employeeLabel ?? "Employee"}>
+              <Select value={f.employee} onValueChange={(v) => setF({ ...f, employee: v })}>
+                <SelectTrigger><SelectValue placeholder="Choose…" /></SelectTrigger>
+                <SelectContent>{names.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+          )}
+          {form.fields.map((fd) => (
+            <Field key={fd.key} label={`${fd.label}${fd.required ? " *" : ""}`} wide={fd.type === "textarea"}>
+              {fd.type === "select" ? (
+                <Select value={extra[fd.key] ?? ""} onValueChange={(v) => setExtra({ ...extra, [fd.key]: v })}>
+                  <SelectTrigger><SelectValue placeholder="Choose…" /></SelectTrigger>
+                  <SelectContent>{fd.options!.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                </Select>
+              ) : fd.type === "textarea" ? (
+                <Textarea rows={2} value={extra[fd.key] ?? ""} onChange={(e) => setExtra({ ...extra, [fd.key]: e.target.value })} />
+              ) : (
+                <Input type={fd.type} value={extra[fd.key] ?? ""} onChange={(e) => setExtra({ ...extra, [fd.key]: e.target.value })} />
+              )}
+            </Field>
+          ))}
+          {form.amountLabel && (
+            <Field label={form.amountLabel}>
+              <Input inputMode="decimal" value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} />
+            </Field>
+          )}
+          <Field label="Status">
+            <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{form.statuses.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </Field>
           <Button className="sm:col-span-2" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save record"}</Button>
         </div>
       )}
