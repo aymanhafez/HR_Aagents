@@ -5,10 +5,12 @@ import { ModulePage } from "@/components/module-page";
 export const Route = createFileRoute("/performance")({
   head: () => ({
     meta: [
-      { title: "Performance — Brite AI" },
-      { name: "description", content: "Reviews, calibration and coaching. Performance module in the Brite AI people intelligence platform." },
-      { property: "og:title", content: "Performance — Brite AI" },
-      { property: "og:description", content: "Reviews, calibration and coaching. Performance module in the Brite AI people intelligence platform." },
+      { title: "Performance — Nayera AI" },
+      { name: "description", content: "Reviews, calibration and coaching. Performance module in the Nayera AI people intelligence platform." },
+      { property: "og:title", content: "Performance — Nayera AI" },
+      { property: "og:description", content: "Reviews, calibration and coaching. Performance module in the Nayera AI people intelligence platform." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: () => <ModulePage slug="performance" />,

@@ -13,10 +13,12 @@ import { fetchUploadedEmployees, type UploadedEmployee } from "@/lib/uploaded-da
 export const Route = createFileRoute("/employees/")({
   head: () => ({
     meta: [
-      { title: "Employees — Brite AI" },
+      { title: "Employees — Nayera AI" },
       { name: "description", content: "Employee master data, utilization and AI risk flags across the company." },
-      { property: "og:title", content: "Employees — Brite AI" },
+      { property: "og:title", content: "Employees — Nayera AI" },
       { property: "og:description", content: "Employee master data, utilization and AI risk flags." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: EmployeesPage,

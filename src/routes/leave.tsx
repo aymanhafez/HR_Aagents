@@ -5,10 +5,12 @@ import { ModulePage } from "@/components/module-page";
 export const Route = createFileRoute("/leave")({
   head: () => ({
     meta: [
-      { title: "Leave — Brite AI" },
-      { name: "description", content: "Balances, requests and absence risk. Operations module in the Brite AI people intelligence platform." },
-      { property: "og:title", content: "Leave — Brite AI" },
-      { property: "og:description", content: "Balances, requests and absence risk. Operations module in the Brite AI people intelligence platform." },
+      { title: "Leave — Nayera AI" },
+      { name: "description", content: "Balances, requests and absence risk. Operations module in the Nayera AI people intelligence platform." },
+      { property: "og:title", content: "Leave — Nayera AI" },
+      { property: "og:description", content: "Balances, requests and absence risk. Operations module in the Nayera AI people intelligence platform." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: () => <ModulePage slug="leave" />,

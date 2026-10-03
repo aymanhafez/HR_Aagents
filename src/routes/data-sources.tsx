@@ -13,10 +13,10 @@ import { mapRow } from "@/lib/uploaded-data";
 export const Route = createFileRoute("/data-sources")({
   head: () => ({
     meta: [
-      { title: "Data Sources — Brite AI" },
-      { name: "description", content: "Upload your own employee data and switch Brite AI between sample and real data." },
-      { property: "og:title", content: "Data Sources — Brite AI" },
-      { property: "og:description", content: "Upload your own employee data and switch Brite AI between sample and real data." },
+      { title: "Data Sources — Nayera AI" },
+      { name: "description", content: "Upload your own employee data and switch Nayera AI between sample and real data." },
+      { property: "og:title", content: "Data Sources — Nayera AI" },
+      { property: "og:description", content: "Upload your own employee data and switch Nayera AI between sample and real data." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -73,13 +73,13 @@ function DataSourcesPage() {
     const csv = "Name,Title,Department,Location,Manager,Grade,Type,Joined,Status,Salary,Utilization,Goals,Risk\nJane Doe,Analyst,Finance,Cairo,John Smith,G4,Full time,2023-01-10,Active,42000,95,88,\n";
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    a.download = "brite-employees-template.csv";
+    a.download = "nayera-employees-template.csv";
     a.click();
   };
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
-      <PageHeader eyebrow="Administration" title="Data Sources" subtitle="Choose which data the app and Brite AI work from." />
+      <PageHeader eyebrow="Administration" title="Data Sources" subtitle="Choose which data the app and Nayera AI work from." />
 
       <div className="grid gap-4 md:grid-cols-2">
         {(["seeded", "uploaded"] as const).map((s) => (

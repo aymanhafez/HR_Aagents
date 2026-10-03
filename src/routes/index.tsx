@@ -12,17 +12,19 @@ import { recommendations, type Recommendation } from "@/data/workspace";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "AI Command Center — Brite AI People Intelligence" },
+      { title: "AI Command Center — Nayera AI People Intelligence" },
       {
         name: "description",
         content:
           "Detect workforce risk, payroll leakage and cost-saving opportunities, then approve the next best action.",
       },
-      { property: "og:title", content: "AI Command Center — Brite AI" },
+      { property: "og:title", content: "AI Command Center — Nayera AI" },
       {
         property: "og:description",
         content: "Workforce risk, cost savings and growth opportunities with human-approved AI actions.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: CommandCenter,
@@ -59,7 +61,7 @@ function CommandCenter() {
       <PageHeader
         eyebrow="Intelligence"
         title="AI Command Center"
-        subtitle="Everything Brite AI detected across the workforce today, with the decision each item needs."
+        subtitle="Everything Nayera AI detected across the workforce today, with the decision each item needs."
       />
 
       <div className="grid gap-3 sm:grid-cols-3">

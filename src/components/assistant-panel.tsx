@@ -3,7 +3,7 @@ import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import briteMark from "@/assets/brite-mark.png";
+import nayeraMark from "@/assets/nayera-mark.png";
 import {
   Conversation,
   ConversationContent,
@@ -42,7 +42,7 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
       api: "/api/chat",
       body: () => bodyRef.current,
     }),
-    onError: (error) => toast.error(error.message || "Brite AI could not answer. Try again."),
+    onError: (error) => toast.error(error.message || "Nayera AI could not answer. Try again."),
   });
 
   const busy = status === "submitted" || status === "streaming";
@@ -61,9 +61,9 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center gap-3 border-b border-border px-5 py-4">
-        <img src={briteMark} alt="" width={32} height={32} className="h-8 w-8" />
+        <img src={nayeraMark} alt="" width={32} height={32} className="h-8 w-8" />
         <div className="leading-tight">
-          <p className="font-display text-sm font-semibold">Brite AI</p>
+          <p className="font-display text-sm font-semibold">Nayera AI</p>
           <p className="text-xs text-muted-foreground">
             {role.title} view · {dataSource === "uploaded" ? "Your uploaded data" : "Sample company"}
           </p>
@@ -74,7 +74,7 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
         <ConversationContent className="gap-4">
           {messages.length === 0 ? (
             <ConversationEmptyState>
-              <img src={briteMark} alt="" width={44} height={44} className="h-11 w-11" />
+              <img src={nayeraMark} alt="" width={44} height={44} className="h-11 w-11" />
               <div className="space-y-1">
                 <h3 className="font-display text-sm font-semibold">Ask about your workforce</h3>
                 <p className="text-sm text-muted-foreground">

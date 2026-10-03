@@ -12,13 +12,15 @@ import { approvals } from "@/data/workspace";
 export const Route = createFileRoute("/approval-center")({
   head: () => ({
     meta: [
-      { title: "Approval Center — Brite AI" },
+      { title: "Approval Center — Nayera AI" },
       {
         name: "description",
         content: "One inbox for leave, hiring, salary, payroll and AI recommendations awaiting human approval.",
       },
-      { property: "og:title", content: "Approval Center — Brite AI" },
+      { property: "og:title", content: "Approval Center — Nayera AI" },
       { property: "og:description", content: "Every sensitive decision waiting for a human approval." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ApprovalCenter,

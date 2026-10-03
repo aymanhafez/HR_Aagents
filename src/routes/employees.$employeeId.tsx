@@ -17,16 +17,18 @@ export const Route = createFileRoute("/employees/$employeeId")({
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
-      return { meta: [{ title: "Employee not found — Brite AI" }, { name: "robots", content: "noindex" }] };
+      return { meta: [{ title: "Employee not found — Nayera AI" }, { name: "robots", content: "noindex" }] };
     }
     const { employee } = loaderData;
     const description = `${employee.name}, ${employee.title} in ${employee.department}. Utilization, goals, skills and AI insights.`;
     return {
       meta: [
-        { title: `${employee.name} — Employee 360 — Brite AI` },
+        { title: `${employee.name} — Employee 360 — Nayera AI` },
         { name: "description", content: description },
         { property: "og:title", content: `${employee.name} — Employee 360` },
         { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary" },
       ],
     };
   },
@@ -154,7 +156,7 @@ function AiSummary({ employee }: { employee: Employee }) {
         <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/12 text-primary">
           <Brain className="h-4 w-4" />
         </span>
-        <p className="font-display text-sm font-semibold">Brite AI employee summary</p>
+        <p className="font-display text-sm font-semibold">Nayera AI employee summary</p>
       </div>
       <p className="text-sm text-foreground">{employee.summary}</p>
       <p className="mt-4 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

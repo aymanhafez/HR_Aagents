@@ -79,13 +79,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Brite AI — People Intelligence HR Platform" },
+      { title: "Nayera AI — People Intelligence HR Platform" },
       {
         name: "description",
         content:
           "HR ERP with AI embedded in every process: detect workforce risk, cut payroll leakage and approve the next best action.",
       },
-      { property: "og:title", content: "Brite AI — People Intelligence HR Platform" },
+      { property: "og:title", content: "Nayera AI — People Intelligence HR Platform" },
       {
         property: "og:description",
         content: "Workforce optimization, payroll intelligence and AI recommendations with human approval.",

@@ -104,8 +104,8 @@ export function ChatTasks() {
     <Card className="overflow-hidden p-0 shadow-[var(--shadow-card)]">
       <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div>
-          <p className="font-display text-sm font-semibold">Tasks created from Brite AI chats</p>
-          <p className="text-xs text-muted-foreground">Ask Brite AI to create a task, or add one yourself.</p>
+          <p className="font-display text-sm font-semibold">Tasks created from Nayera AI chats</p>
+          <p className="text-xs text-muted-foreground">Ask Nayera AI to create a task, or add one yourself.</p>
         </div>
         <Button size="sm" variant={showForm ? "outline" : "default"} className="gap-1.5" onClick={() => setShowForm((v) => !v)}>
           <Plus className="h-3.5 w-3.5" />

@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { MessageSquareText, Search, Bell } from "lucide-react";
 
-import briteMark from "@/assets/brite-mark.png";
+import nayeraMark from "@/assets/nayera-mark.png";
 import { Icon } from "@/components/icon";
 import { AssistantPanel } from "@/components/assistant-panel";
 import { Button } from "@/components/ui/button";
@@ -29,9 +29,9 @@ function Shell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen bg-background">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto bg-sidebar text-sidebar-foreground lg:flex">
         <div className="flex items-center gap-3 px-5 py-5">
-          <img src={briteMark} alt="" width={36} height={36} className="h-9 w-9" />
+          <img src={nayeraMark} alt="" width={36} height={36} className="h-9 w-9" />
           <div className="leading-tight">
-            <p className="font-display text-sm font-semibold text-sidebar-accent-foreground">Brite AI</p>
+            <p className="font-display text-sm font-semibold text-sidebar-accent-foreground">Nayera AI</p>
             <p className="text-[11px] text-sidebar-foreground/60">People Intelligence ERP</p>
           </div>
         </div>
@@ -104,7 +104,7 @@ function Shell({ children }: { children: ReactNode }) {
               <SheetTrigger asChild>
                 <Button size="sm" className="gap-2">
                   <MessageSquareText className="h-4 w-4" />
-                  Ask Brite AI
+                  Ask Nayera AI
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-[460px]">
