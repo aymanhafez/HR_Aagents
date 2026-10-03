@@ -77,6 +77,7 @@ function DataSourcesPage() {
     setBusy(true);
     if (seedCount) {
       const { error } = await supabase.from("uploaded_employees").delete().eq("extra->>seed", SEED_TAG);
+      await supabase.from("module_records").delete().eq("module", "seed_data");
       if (error) toast.error(error.message); else toast.success("Full sample company turned off");
     } else {
       const { error } = await supabase.from("uploaded_employees").insert(buildFullSeed());
