@@ -153,12 +153,31 @@ export async function handleChat(request: Request) {
   system += `
 
 TASKS
-You can create follow-up tasks with the create_task tool. Use it when the user asks for a task, action item or follow-up, or asks you to assign work. Base the task on what was discussed in this conversation: a clear action title, a description with the relevant figures and context, a realistic due date (today is ${new Date().toISOString().slice(0, 10)}), and a priority. Assign it only to an employee who exists in the data above, using their exact name; if the right person is unclear, ask. After creating it, confirm in one line who it was assigned to and when it is due.`;
+You can create follow-up tasks with the create_task tool. Use it when the user asks for a task, action item or follow-up, or asks you to assign work. Base the task on what was discussed in this conversation: a clear action title, a description with the relevant figures and context, a realistic due date (today is ${new Date().toISOString().slice(0, 10)}), and a priority. Assign it only to an employee who exists in the data above, using their exact name; if the right person is unclear, ask. After creating it, confirm in one line who it was assigned to and when it is due.
+
+AGENT ACTIONS
+Decide on every message: if the user wants something DONE that changes records or needs a multi-step business process (salary change, promotion, transfer, title/grade/status change, hiring, termination, payroll action, running a review or plan end to end), call start_agent_run with a clear, specific objective naming the employees and values from the conversation. Do not call it for questions, analysis or explanations — just answer those. After starting a run, reply in one or two lines: what the agent will do and that sensitive steps will wait for approval.`;
 
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   const sourceQuestion = lastUser?.parts.map((p) => (p.type === "text" ? p.text : "")).join(" ").slice(0, 500) ?? "";
 
   const tools = {
+    start_agent_run: tool({
+      description: "Hand an action that must be executed (record changes or a multi-step process) to a Nayera agent.",
+      inputSchema: z.object({
+        objective: z.string().describe("Specific objective with employee names and values"),
+        priority: z.enum(["Low", "Medium", "High", "Critical"]),
+      }),
+      execute: async (input) => {
+        try {
+          const { startRun } = await import("@/lib/agents/engine.server");
+          const r = await startRun({ objective: input.objective, roleId: body.roleId ?? "", priority: input.priority, dataSource: body.dataSource === "uploaded" ? "uploaded" : "seeded" });
+          return { ok: true as const, run_id: r.id, objective: input.objective };
+        } catch (e) {
+          return { ok: false as const, error: e instanceof Error ? e.message : "Could not start the agent" };
+        }
+      },
+    }),
     create_task: tool({
       description: "Create a follow-up task assigned to one employee, based on the current conversation.",
       inputSchema: z.object({

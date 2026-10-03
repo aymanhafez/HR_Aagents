@@ -20,8 +20,6 @@ import {
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Tool, ToolContent, ToolHeader } from "@/components/ai-elements/tool";
 import { Link } from "@tanstack/react-router";
-import { Bot, ListChecks } from "lucide-react";
-import { useStartRun } from "@/components/agents/agent-parts";
 import { Button } from "@/components/ui/button";
 import type { Role } from "@/data/workspace";
 
@@ -47,12 +45,6 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
   });
 
   const busy = status === "submitted" || status === "streaming";
-  const { run: startRun, pending: starting } = useStartRun();
-  const handoff = () => {
-    const text = messages.map((m) => `${m.role === "user" ? "User" : "Nayera"}: ${m.parts.map((p) => (p.type === "text" ? p.text : "")).join(" ")}`).join("\n").slice(-900);
-    startRun(`Carry out the action agreed in this conversation:\n${text}`, undefined, "High");
-  };
-
   useEffect(() => {
     if (!busy) textareaRef.current?.focus();
   }, [busy, messages.length]);
@@ -107,6 +99,23 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
                 <MessageContent>
                   {message.parts.map((part, i) => {
                     if (part.type === "text") return <MessageResponse key={i}>{part.text}</MessageResponse>;
+                    if (part.type === "tool-start_agent_run") {
+                      const p = part as unknown as { state: "input-streaming" | "input-available" | "output-available" | "output-error"; input?: { objective?: string }; output?: { ok: boolean; run_id?: string; objective?: string; error?: string }; errorText?: string };
+                      const o = p.output;
+                      return (
+                        <Tool key={i} defaultOpen={false}>
+                          <ToolHeader type="tool-start_agent_run" state={p.state} title={o?.ok ? "Agent action started" : "Starting agent action…"} />
+                          <ToolContent>
+                            <div className="space-y-1.5 p-3 text-xs">
+                              <p className="text-muted-foreground">{o?.objective ?? p.input?.objective ?? ""}</p>
+                              {o?.ok && o.run_id ? (
+                                <Link to="/agents/$runId" params={{ runId: o.run_id }} className="inline-block font-medium text-primary underline">Open agent run</Link>
+                              ) : o && !o.ok ? <p className="text-destructive">{o.error}</p> : p.errorText ? <p className="text-destructive">{p.errorText}</p> : null}
+                            </div>
+                          </ToolContent>
+                        </Tool>
+                      );
+                    }
                     if (part.type === "tool-create_task") {
                       const p = part as unknown as {
                         state: "input-streaming" | "input-available" | "output-available" | "output-error";
@@ -151,24 +160,6 @@ export function AssistantPanel({ role, context, dataSource }: { role: Role; cont
       </Conversation>
 
       <div className="border-t border-border p-3">
-        {messages.length > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="mb-2 w-full gap-2 text-xs"
-            disabled={busy}
-            onClick={() => send("Create a follow-up task from this conversation and assign it to the most suitable employee.")}
-          >
-            <ListChecks className="h-3.5 w-3.5" />
-            Create task from this chat
-          </Button>
-        )}
-        {messages.length > 0 && (
-          <Button variant="outline" size="sm" className="mb-2 w-full gap-2 text-xs" disabled={busy || starting} onClick={handoff}>
-            <Bot className="h-3.5 w-3.5" />
-            {starting ? "Planning agent run…" : "Run this as an agent"}
-          </Button>
-        )}
         <PromptInput
           onSubmit={(_message, event) => {
             event.preventDefault();
