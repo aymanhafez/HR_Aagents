@@ -131,6 +131,7 @@ async function updateProgress(runId: string) {
 
 export async function startRun(input: { agent?: string | undefined; objective: string; roleId: string; priority: string; dataSource: string; deadline?: string | undefined }) {
   const role = roles.find((r) => r.id === input.roleId) ?? roles[0]!;
+  if (input.dataSource !== "uploaded" && (await seedOn())) input = { ...input, dataSource: "uploaded" };
   const data = await dataFor(input.dataSource);
   const agentList = agents.map((a) => `${a.id}: ${a.name} — ${a.focus}`).join("\n");
   const fixed = input.agent ? agentById[input.agent] : undefined;
