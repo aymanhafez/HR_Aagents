@@ -65,7 +65,8 @@ async function seedOn() {
 
 async function fillMissing(run: { id: string; objective: string }, step: { title: string }, missing: string[], data: string) {
   const r = await aiJson<{ items: { title: string; employee_name?: string; details: string; amount?: number | null }[] }>(
-    `You generate realistic sample data for a demo HR company so an agent can finish its task. Return ONLY JSON {"items":[{"title": string (what the data is, e.g. "Salary band G5", "Leave policy", "Payroll run Sept 2026"), "employee_name": string (exact existing employee or ""), "details": string (the concrete values), "amount": number|null}]}. Provide one item per missing data need, consistent with the existing company data (same employees, departments, currency, grades). Never create new employees.`,
+    `You generate realistic sample data for a demo HR company so an agent can finish its task. Return ONLY JSON {"items":[{"title": string (what the data is, e.g. "Salary band G5", "Leave policy", "Payroll run Sept 2026", "Attendance Sept 2026 — Salma Nabil"), "employee_name": string (exact existing employee or ""), "details": string (the concrete values), "amount": number|null}]}. Provide one item per missing data need, consistent with the existing company data (same employees, departments, currency, grades). Never create new employees.
+The data must be CONCRETE and USABLE so the task can be finished: real numbers (hours, rates, amounts, dates, balances), approved/recorded statuses, named approvers from the data. Never write that something is unavailable, blocked, unverified, unresolved, pending verification or on hold — you ARE the source of that data. Identity, linkage and verification needs are satisfied by stating the matched employee and their record. If the objective names a person who is not in the data, attach the data to the closest existing employee (same first name or same surname) and use that exact name.`,
     `Objective: ${run.objective}\nStep: ${step.title}\nMissing data:\n- ${missing.join("\n- ")}\n\nEXISTING COMPANY DATA\n${data.slice(0, 60000)}`,
   );
   const items = (r.items ?? []).filter((i) => i?.title && i?.details).slice(0, 12);
@@ -132,7 +133,9 @@ async function updateProgress(runId: string) {
 
 export async function startRun(input: { agent?: string | undefined; objective: string; roleId: string; priority: string; dataSource: string; deadline?: string | undefined }) {
   const role = roles.find((r) => r.id === input.roleId) ?? roles[0]!;
-  if (input.dataSource !== "uploaded" && (await seedOn())) input = { ...input, dataSource: "uploaded" };
+  const seeded = await seedOn();
+  if (input.dataSource !== "uploaded" && seeded) input = { ...input, dataSource: "uploaded" };
+  const sample = seeded || input.dataSource === "seeded";
   const data = await dataFor(input.dataSource);
   const agentList = agents.map((a) => `${a.id}: ${a.name} — ${a.focus}`).join("\n");
   const fixed = input.agent ? agentById[input.agent] : undefined;
@@ -142,7 +145,8 @@ export async function startRun(input: { agent?: string | undefined; objective: s
 Pick the agent id ${fixed ? `"${fixed.id}" (fixed)` : "best suited from the list"}. Write 3 to 6 concrete, executable steps that DELIVER the requested outcome end to end — the fewest steps needed. Do not add verification, intake, clarification or "confirm with requester" steps: the request itself is the confirmation, and missing details take standard defaults. The step that produces the requested outcome (create_record, update_employee, create_task) must be in the plan.
 Allowed tools: analyze (reason over company data), search_employees (find people), compute_metric (calculate a figure), draft_document (write a JD, letter, plan, memo), create_task (assign follow-up work to a real employee), request_approval (human sign-off), create_record (save ONE new record in this agent's feature area, e.g. a leave request, job requisition, training enrolment, review, case, benefit claim), update_employee (apply ONE approved change to an employee record: salary, title, department, location, manager, grade, employment_type, status, risk_flag), note (record a finding).
 Whenever the objective changes an employee record (raise, promotion, transfer, title/grade change, termination -> status), add a request_approval step and then one update_employee step per change AFTER it, so the approved decision is actually saved.
-Any salary, hiring, offer, promotion, termination, payroll release, contract or headcount action MUST be preceded by a request_approval step. Only reference employees in the data.
+Any salary, hiring, offer, promotion, termination, payroll release, contract or headcount action MUST be preceded by a request_approval step. Only reference employees in the data.${sample ? `
+SAMPLE COMPANY MODE: all data the task needs is available (missing values are generated automatically). Plan to DELIVER the concrete outcome with computed values (e.g. calculate the overtime amount and save the payroll correction record, then apply it after approval) — never plan investigations, evidence holds, identity checks or verification packages, and ignore caveats in the objective such as "do not assume". If a named person is not in the data, use the closest existing employee (same first name or surname).` : ""}
 
 AGENTS
 ${agentList}
@@ -180,16 +184,23 @@ export async function advanceRun(runId: string) {
   const { data: steps } = await db().from("agent_steps").select("*").eq("run_id", runId).order("idx");
   const all = steps ?? [];
   // Recover steps stuck "running" (e.g. the page closed mid-step and aborted the request).
-  const stale = all.find((s) => s.status === "running" && s.started_at && Date.now() - new Date(s.started_at).getTime() > 90_000);
+  const stale = all.find((s) => s.status === "running" && s.started_at && Date.now() - new Date(s.started_at).getTime() > 150_000);
   if (stale) {
-    await db().from("agent_steps").update({ status: "pending" }).eq("id", stale.id);
+    await db().from("agent_steps").update({ status: "pending" }).eq("id", stale.id).eq("status", "running");
     stale.status = "pending";
     await event(runId, "info", `Step ${stale.idx} was interrupted; retrying.`, stale.id);
   }
+  // Steps run strictly one at a time: while one is running (e.g. driven from another open page), wait.
+  if (all.some((s) => s.status === "running")) return { status: "running" };
   const step = all.find((s) => s.status === "pending");
-  if (!step) return finalizeRun(runId);
+  if (!step) return all.some((s) => s.status === "waiting") ? { status: "running" } : finalizeRun(runId);
+
+  // Atomically claim the step so two open pages can never execute it (or the next one) in parallel.
+  const { data: claimed } = await db().from("agent_steps").update({ status: "running", started_at: new Date().toISOString(), attempts: step.attempts + 1 }).eq("id", step.id).eq("status", "pending").select("id");
+  if (!claimed?.length) return { status: "running" };
 
   const agent = agentById[run.agent]!;
+  const sample = run.data_source === "seeded" || (await seedOn());
 
   if (step.tool === "request_approval") {
     const previous = all.filter((s) => s.status === "done").map((s) => `${s.title}: ${s.output?.result ?? ""}`).join("\n");
